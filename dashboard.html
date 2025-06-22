@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber Security Admin Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        :root {
+            --primary: #0c0e1b;
+            --secondary: #1a1d36;
+            --accent: #6a4ce0;
+            --accent2: #ff4d94;
+            --accent3: #00e0ff;
+            --text: #e0e0ff;
+            --text-secondary: #a0a0c0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(106, 76, 224, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(255, 77, 148, 0.1) 0%, transparent 40%);
+            z-index: -1;
+        }
+        
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle var(--duration, 5s) infinite ease-in-out;
+        }
+        
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 1; }
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Login Page */
+        #login-page {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            background: rgba(12, 14, 27, 0.8);
+            backdrop-filter: blur(10px);
+        }
+        
+        .login-card {
+            background: var(--secondary);
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(106, 76, 224, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(transparent, var(--accent), transparent 30%);
+            animation: rotate 6s linear infinite;
+            z-index: 0;
+        }
+        
+        .login-card::after {
+            content: '';
+            position: absolute;
+            inset: 3px;
+            background: var(--secondary);
+            border-radius: 18px;
+            z-index: 1;
+        }
+        
+        @keyframes rotate {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        
+        .login-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .login-header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(to right, var(--accent3), var(--accent2));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .login-header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+        
+        .password-display {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 25px;
+            border: 1px solid rgba(106, 76, 224, 0.5);
+        }
+        
+        .password-display h3 {
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .generated-password {
+            font-size: 1.4rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            background: linear-gradient(to right, var(--accent3), var(--accent2));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            padding: 10px;
+        }
+        
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .form-group {
+            position: relative;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 15px 20px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(106, 76, 224, 0.5);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(106, 76, 224, 0.3);
+        }
+        
+        .login-btn {
+            background: linear-gradient(45deg, var(--accent), var(--accent2));
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 10px;
+        }
+        
+        .login-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(106, 76, 224, 0.4);
+        }
+        
+        /* Dashboard */
+        #dashboard {
+            display: none;
+            min-height: 100vh;
+        }
+        
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            border-bottom: 1px solid rgba(106, 76, 224, 0.3);
+        }
+        
+        .dashboard-title {
+            font-size: 2rem;
+            background: linear-gradient(to right, var(--accent3), var(--accent2));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .user-photo-container {
+            position: relative;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid var(--accent);
+            box-shadow: 0 0 20px rgba(106, 76, 224, 0.5);
+        }
+        
+        .user-photo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: blur(10px);
+            transform: rotate(0deg);
+            transition: all 0.5s ease;
+        }
+        
+        .unblur-form {
+            position: absolute;
+            bottom: 5px;
+            left: 0;
+            right: 0;
+            display: flex;
+            padding: 0 10px;
+        }
+        
+        .unblur-input {
+            flex: 1;
+            padding: 5px 10px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid var(--accent);
+            border-radius: 5px;
+            color: white;
+            font-size: 0.7rem;
+        }
+        
+        .unblur-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            margin-left: 5px;
+            cursor: pointer;
+            font-size: 0.7rem;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .widget {
+            background: var(--secondary);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(106, 76, 224, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .widget::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to right, var(--accent), var(--accent2));
+        }
+        
+        .widget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .widget-title {
+            font-size: 1.3rem;
+            color: var(--accent3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .widget-icon {
+            font-size: 1.5rem;
+        }
+        
+        .weather-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .weather-icon {
+            font-size: 5rem;
+            margin: 10px 0;
+            animation: float 3s infinite ease-in-out;
+        }
+        
+        .weather-temp {
+            font-size: 3rem;
+            font-weight: bold;
+            background: linear-gradient(to right, var(--accent3), var(--accent2));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .weather-desc {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+        }
+        
+        .weather-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            width: 100%;
+            margin-top: 15px;
+        }
+        
+        .weather-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .weather-item .label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+        
+        .weather-item .value {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .alert-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .alert-item {
+            background: rgba(255, 77, 148, 0.1);
+            border: 1px solid rgba(255, 77, 148, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .alert-icon {
+            font-size: 1.8rem;
+            color: var(--accent2);
+        }
+        
+        .alert-content h4 {
+            margin-bottom: 5px;
+            color: var(--accent2);
+        }
+        
+        .alert-content p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        .news-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        
+        .news-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .news-container::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+        
+        .news-container::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 4px;
+        }
+        
+        .news-item {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            transition: all 0.3s;
+        }
+        
+        .news-item:hover {
+            transform: translateY(-3px);
+            background: rgba(106, 76, 224, 0.1);
+        }
+        
+        .news-source {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .source-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+        
+        .source-name {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        .news-title {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            color: var(--accent3);
+        }
+        
+        .news-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        .encryption-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .encryption-title {
+            text-align: center;
+            color: var(--accent3);
+            margin-bottom: 10px;
+        }
+        
+        .encryption-result {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            max-height: 200px;
+            overflow-y: auto;
+            line-height: 1.5;
+        }
+        
+        .encryption-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 10px;
+        }
+        
+        .zip-form {
+            background: var(--secondary);
+            border-radius: 15px;
+            padding: 20px;
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(106, 76, 224, 0.3);
+        }
+        
+        .zip-input {
+            flex: 1;
+            padding: 12px 20px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(106, 76, 224, 0.5);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 1rem;
+        }
+        
+        .zip-btn {
+            background: linear-gradient(45deg, var(--accent), var(--accent2));
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .zip-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(106, 76, 224, 0.4);
+        }
+        
+        /* MSN Weather Widget */
+        .msn-weather-container {
+            width: 100%;
+            height: 400px;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid rgba(106, 76, 224, 0.3);
+        }
+        
+        /* Loading Spinner */
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100px;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(106, 76, 224, 0.3);
+            border-top: 4px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .cinematic {
+            position: relative;
+        }
+        
+        .cinematic::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                linear-gradient(rgba(0, 0, 0, 0.1) 50%, 
+                rgba(0, 0, 0, 0.25) 50%),
+                linear-gradient(90deg, rgba(0, 0, 0, 0.1) 50%, 
+                rgba(0, 0, 0, 0.25) 50%);
+            background-size: 4px 4px;
+            pointer-events: none;
+            mix-blend-mode: overlay;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .login-card {
+                padding: 25px;
+            }
+            
+            .dashboard-header {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .zip-form {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Star background -->
+    <div class="stars"></div>
+    
+    <!-- Login Page -->
+    <div id="login-page">
+        <div class="login-card">
+            <div class="login-content">
+                <div class="login-header">
+                    <h1>Cyber Security Portal</h1>
+                    <p>VoIP Engineer Access Dashboard</p>
+                </div>
+                
+                <div class="password-display">
+                    <h3>Your Generated Access Code</h3>
+                    <div class="generated-password" id="generated-password">Loading...</div>
+                </div>
+                
+                <form class="login-form" id="login-form">
+                    <div class="form-group">
+                        <label for="password">Enter Access Code</label>
+                        <input type="password" id="password" placeholder="••••••••" required>
+                    </div>
+                    
+                    <button type="submit" class="login-btn">Authenticate</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Dashboard -->
+    <div id="dashboard">
+        <div class="container">
+            <div class="dashboard-header">
+                <h2 class="dashboard-title">VoIP Engineer Dashboard</h2>
+                <div class="user-info">
+                    <div class="user-photo-container">
+                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1887&q=80" 
+                             alt="User Photo" class="user-photo" id="user-photo">
+                        <div class="unblur-form">
+                            <input type="text" class="unblur-input" id="secret-key" placeholder="Enter Secret Key">
+                            <button class="unblur-btn" id="unblur-btn">Unlock</button>
+                        </div>
+                    </div>
+                    <div>
+                        <h3>John Smith</h3>
+                        <p>Senior VoIP Engineer</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="zip-form">
+                <input type="text" class="zip-input" id="zip-input" placeholder="Enter ZIP Code (e.g., 13601 for Watertown, NY)">
+                <button class="zip-btn" id="zip-btn">Update Location</button>
+            </div>
+            
+            <div class="dashboard-grid">
+                <!-- MSN Weather Widget -->
+                <div class="widget">
+                    <div class="widget-header">
+                        <h3 class="widget-title"><i class="fas fa-cloud-sun widget-icon"></i> Live Weather</h3>
+                        <span class="location" id="weather-location">Loading...</span>
+                    </div>
+                    <div id="msn-weather-widget">
+                        <div class="loading-spinner">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Alerts Widget -->
+                <div class="widget">
+                    <div class="widget-header">
+                        <h3 class="widget-title"><i class="fas fa-exclamation-triangle widget-icon"></i> Weather & Traffic Alerts</h3>
+                    </div>
+                    <div class="alert-container" id="alerts-container">
+                        <div class="loading-spinner">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- News Widget -->
+                <div class="widget">
+                    <div class="widget-header">
+                        <h3 class="widget-title"><i class="fas fa-newspaper widget-icon"></i> Local News</h3>
+                    </div>
+                    <div class="news-container" id="news-container">
+                        <div class="loading-spinner">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- User Profile Widget -->
+                <div class="widget">
+                    <div class="widget-header">
+                        <h3 class="widget-title"><i class="fas fa-user widget-icon"></i> User Profile</h3>
+                    </div>
+                    <div class="profile-info">
+                        <p><strong>Name:</strong> John Smith</p>
+                        <p><strong>Role:</strong> Senior VoIP Engineer</p>
+                        <p><strong>Security Clearance:</strong> Level 5</p>
+                        <p><strong>Last Login:</strong> Today, <span id="login-time">14:32</span></p>
+                        <p><strong>Status:</strong> <span style="color: var(--accent3);">Active</span></p>
+                    </div>
+                </div>
+                
+                <!-- Encryption Widget -->
+                <div class="widget">
+                    <div class="widget-header">
+                        <h3 class="widget-title"><i class="fas fa-lock widget-icon"></i> Encrypted Data</h3>
+                    </div>
+                    <div class="encryption-container">
+                        <h4 class="encryption-title">AES-256 ECB Encryption Results</h4>
+                        <div class="encryption-label">Base64 Encoded:</div>
+                        <div class="encryption-result" id="base64-output">Processing...</div>
+                        <div class="encryption-label">HEX Encoded:</div>
+                        <div class="encryption-result" id="hex-output">Processing...</div>
+                    </div>
+                </div>
+                
+                <!-- System Status Widget -->
+                <div class="widget">
+                    <div class="widget-header">
+                        <h3 class="widget-title"><i class="fas fa-server widget-icon"></i> System Status</h3>
+                    </div>
+                    <div class="status-container">
+                        <div class="status-item">
+                            <p>VoIP Servers <span class="status-indicator active">Online</span></p>
+                            <div class="progress-bar">
+                                <div class="progress" style="width: 85%;"></div>
+                            </div>
+                        </div>
+                        <div class="status-item">
+                            <p>Security Gateways <span class="status-indicator active">Online</span></p>
+                            <div class="progress-bar">
+                                <div class="progress" style="width: 92%;"></div>
+                            </div>
+                        </div>
+                        <div class="status-item">
+                            <p>Database Cluster <span class="status-indicator warning">Warning</span></p>
+                            <div class="progress-bar">
+                                <div class="progress" style="width: 65%; background: orange;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Generate stars for background
+        function createStars() {
+            const starsContainer = document.querySelector('.stars');
+            const starCount = 200;
+            
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                
+                // Random position
+                const x = Math.random() * 100;
+                const y = Math.random() * 100;
+                star.style.left = `${x}%`;
+                star.style.top = `${y}%`;
+                
+                // Random size
+                const size = Math.random() * 3;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                
+                // Random opacity and animation
+                star.style.opacity = Math.random() * 0.8 + 0.2;
+                star.style.setProperty('--duration', `${Math.random() * 5 + 3}s`);
+                
+                starsContainer.appendChild(star);
+            }
+        }
+        
+        // Generate random password
+        function generatePassword() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()';
+            let password = '';
+            const length = 12;
+            
+            for (let i = 0; i < length; i++) {
+                password += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            
+            return password;
+        }
+        
+        // Encrypt the attachment content using AES-256 ECB
+        function encryptAttachment() {
+            const secretKey = "KillianDaisreauxGoffman";
+            const iv = "KillianDaisreauxGoffman";
+            const plaintext = "Secret Key\nResponsivos And Android\nResponse We";
+            
+            // Key needs to be 256 bits (32 bytes)
+            // Pad the key to 32 bytes if needed
+            let key = CryptoJS.enc.Utf8.parse(secretKey);
+            if (secretKey.length < 32) {
+                key = CryptoJS.enc.Utf8.parse(secretKey.padEnd(32, '\0'));
+            } else if (secretKey.length > 32) {
+                key = CryptoJS.enc.Utf8.parse(secretKey.substring(0, 32));
+            }
+            
+            // ECB mode doesn't use IV, but we'll include it as specified
+            const ivParsed = CryptoJS.enc.Utf8.parse(iv);
+            
+            // Encrypt
+            const encrypted = CryptoJS.AES.encrypt(plaintext, key, {
+                mode: CryptoJS.mode.ECB,
+                padding: CryptoJS.pad.Pkcs7
+            });
+            
+            // Get encrypted data in Base64 and Hex
+            const base64 = encrypted.toString();
+            const hex = CryptoJS.enc.Hex.stringify(CryptoJS.enc.Base64.parse(base64));
+            
+            return { base64, hex };
+        }
+        
+        // Fetch weather data based on ZIP code
+        async function fetchWeatherData(zipCode) {
+            try {
+                // In a real application, you would use a weather API here
+                // For demonstration, we'll simulate fetching data
+                
+                // Show loading state
+                document.getElementById('msn-weather-widget').innerHTML = `
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                    </div>
+                `;
+                
+                // Simulate API delay
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                // Get current time
+                const now = new Date();
+                const hours = now.getHours();
+                const minutes = now.getMinutes().toString().padStart(2, '0');
+                const timeString = `${hours}:${minutes}`;
+                document.getElementById('login-time').textContent = timeString;
+                
+                // Determine weather based on time of day (for demo purposes)
+                let weatherData;
+                if (hours >= 6 && hours < 18) {
+                    // Daytime
+                    weatherData = {
+                        location: zipCode === '13601' ? 'Watertown, NY' : `Location for ZIP: ${zipCode}`,
+                        temp: Math.floor(Math.random() * 15) + 65, // 65-80°F
+                        condition: 'Sunny',
+                        icon: 'fa-sun',
+                        humidity: Math.floor(Math.random() * 30) + 50, // 50-80%
+                        wind: Math.floor(Math.random() * 10) + 5, // 5-15 mph
+                        alerts: [
+                            {
+                                type: 'weather',
+                                title: 'UV Warning',
+                                message: 'High UV index expected today. Wear sunscreen.'
+                            },
+                            {
+                                type: 'traffic',
+                                title: 'Road Construction',
+                                message: 'Construction on Route 11 expected until 5 PM.'
+                            }
+                        ]
+                    };
+                } else {
+                    // Nighttime
+                    weatherData = {
+                        location: zipCode === '13601' ? 'Watertown, NY' : `Location for ZIP: ${zipCode}`,
+                        temp: Math.floor(Math.random() * 15) + 45, // 45-60°F
+                        condition: 'Clear',
+                        icon: 'fa-moon',
+                        humidity: Math.floor(Math.random() * 30) + 50, // 50-80%
+                        wind: Math.floor(Math.random() * 10) + 5, // 5-15 mph
+                        alerts: [
+                            {
+                                type: 'weather',
+                                title: 'Frost Advisory',
+                                message: 'Temperatures dropping below freezing overnight.'
+                            },
+                            {
+                                type: 'traffic',
+                                title: 'Accident Reported',
+                                message: 'Accident on I-81 near exit 45. Expect delays.'
+                            }
+                        ]
+                    };
+                }
+                
+                // Update weather widget
+                document.getElementById('weather-location').textContent = weatherData.location;
+                document.getElementById('msn-weather-widget').innerHTML = `
+                    <div class="weather-container">
+                        <i class="fas ${weatherData.icon} weather-icon"></i>
+                        <div class="weather-temp">${weatherData.temp}°F</div>
+                        <div class="weather-desc">${weatherData.condition}</div>
+                        <div class="weather-details">
+                            <div class="weather-item">
+                                <div class="label">Humidity</div>
+                                <div class="value">${weatherData.humidity}%</div>
+                            </div>
+                            <div class="weather-item">
+                                <div class="label">Wind</div>
+                                <div class="value">${weatherData.wind} mph</div>
+                            </div>
+                            <div class="weather-item">
+                                <div class="label">Pressure</div>
+                                <div class="value">${Math.floor(Math.random() * 10) + 1010} hPa</div>
+                            </div>
+                            <div class="weather-item">
+                                <div class="label">Visibility</div>
+                                <div class="value">10 mi</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Update alerts
+                const alertsContainer = document.getElementById('alerts-container');
+                alertsContainer.innerHTML = '';
+                
+                weatherData.alerts.forEach(alert => {
+                    const alertElement = document.createElement('div');
+                    alertElement.className = 'alert-item';
+                    alertElement.innerHTML = `
+                        <i class="fas ${alert.type === 'weather' ? 'fa-cloud-showers-heavy' : 'fa-traffic-light'} alert-icon"></i>
+                        <div class="alert-content">
+                            <h4>${alert.title}</h4>
+                            <p>${alert.message}</p>
+                        </div>
+                    `;
+                    alertsContainer.appendChild(alertElement);
+                });
+                
+                // Update news based on location
+                const newsContainer = document.getElementById('news-container');
+                newsContainer.innerHTML = '';
+                
+                const newsItems = [
+                    {
+                        source: 'Police Department',
+                        icon: 'fa-shield-alt',
+                        title: 'Community Safety Meeting',
+                        desc: 'Local police to hold community safety meeting this Thursday at 6 PM.'
+                    },
+                    {
+                        source: 'State Police',
+                        icon: 'fa-car',
+                        title: 'DUI Checkpoint Announcement',
+                        desc: 'State police to conduct DUI checkpoint this weekend on Route 3.'
+                    },
+                    {
+                        source: 'Channel 7 News',
+                        icon: 'fa-tv',
+                        title: 'Local Tech Expansion',
+                        desc: 'Tech company announces expansion, bringing 200 new jobs to the area.'
+                    },
+                    {
+                        source: 'Traffic Report',
+                        icon: 'fa-traffic-light',
+                        title: 'Bridge Construction Update',
+                        desc: 'Main Street bridge construction to begin next Monday, detours in place.'
+                    }
+                ];
+                
+                newsItems.forEach(news => {
+                    const newsElement = document.createElement('div');
+                    newsElement.className = 'news-item';
+                    newsElement.innerHTML = `
+                        <div class="news-source">
+                            <div class="source-icon"><i class="fas ${news.icon}"></i></div>
+                            <div class="source-name">${news.source}</div>
+                        </div>
+                        <h4 class="news-title">${news.title}</h4>
+                        <p class="news-desc">${news.desc}</p>
+                    `;
+                    newsContainer.appendChild(newsElement);
+                });
+                
+            } catch (error) {
+                console.error('Error fetching weather data:', error);
+                document.getElementById('msn-weather-widget').innerHTML = `
+                    <div class="alert-item">
+                        <i class="fas fa-exclamation-circle alert-icon"></i>
+                        <div class="alert-content">
+                            <h4>Weather Data Error</h4>
+                            <p>Failed to load weather data. Please try again later.</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        // Initialize the dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            // Create star background
+            createStars();
+            
+            // Generate and display password
+            const password = generatePassword();
+            document.getElementById('generated-password').textContent = password;
+            
+            // Handle login form
+            const loginForm = document.getElementById('login-form');
+            loginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const enteredPassword = document.getElementById('password').value;
+                
+                if (enteredPassword === password) {
+                    document.getElementById('login-page').style.display = 'none';
+                    document.getElementById('dashboard').style.display = 'block';
+                    
+                    // Perform encryption and display results
+                    const encrypted = encryptAttachment();
+                    document.getElementById('base64-output').textContent = encrypted.base64;
+                    document.getElementById('hex-output').textContent = encrypted.hex;
+                    
+                    // Load default weather data (Watertown, NY)
+                    fetchWeatherData('13601');
+                } else {
+                    alert('Invalid access code! Please try again.');
+                    document.getElementById('password').value = '';
+                }
+            });
+            
+            // Handle secret key for unblurring photo
+            const unblurBtn = document.getElementById('unblur-btn');
+            unblurBtn.addEventListener('click', function() {
+                const secretKey = document.getElementById('secret-key').value;
+                const userPhoto = document.getElementById('user-photo');
+                
+                if (secretKey === "KillianDaisreauxGoffman") {
+                    userPhoto.style.filter = 'blur(0)';
+                    userPhoto.style.transform = 'rotate(0)';
+                    userPhoto.classList.add('cinematic');
+                    
+                    // Add cinematic filter effect
+                    setTimeout(() => {
+                        userPhoto.style.opacity = '0.9';
+                        userPhoto.style.filter = 'grayscale(20%) brightness(110%) contrast(120%)';
+                    }, 1000);
+                } else {
+                    alert('Invalid secret key!');
+                }
+            });
+            
+            // Handle ZIP code submission
+            const zipBtn = document.getElementById('zip-btn');
+            zipBtn.addEventListener('click', function() {
+                const zipInput = document.getElementById('zip-input').value.trim();
+                if (zipInput) {
+                    fetchWeatherData(zipInput);
+                } else {
+                    alert('Please enter a valid ZIP code');
+                }
+            });
+            
+            // Allow Enter key to submit ZIP code
+            document.getElementById('zip-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    zipBtn.click();
+                }
+            });
+            
+            // Add animation to weather icons
+            const weatherIcon = document.querySelector('.weather-icon');
+            if (weatherIcon) {
+                setInterval(() => {
+                    weatherIcon.style.animation = 'none';
+                    setTimeout(() => {
+                        weatherIcon.style.animation = 'float 3s infinite ease-in-out';
+                    }, 10);
+                }, 3000);
+            }
+        });
+    </script>
+</body>
+</html>
