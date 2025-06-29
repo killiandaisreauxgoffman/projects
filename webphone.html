@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telnyx Web Phone</title>
+    <script src="https://cdn.jsdelivr.net/npm/sip.js@0.20.0/dist/sip.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0c0c1d, #1a1a3a);
+            color: #e0e0ff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+            padding: 20px;
+        }
+        
+        .phone-container {
+            background: rgba(10, 15, 35, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            border: 1px solid rgba(100, 120, 255, 0.2);
+            box-shadow: 0 20px 50px rgba(0, 0, 50, 0.5);
+            width: 100%;
+            max-width: 400px;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            z-index: 10;
+        }
+        
+        .status-display {
+            background: rgba(20, 25, 50, 0.5);
+            border-radius: 15px;
+            padding: 15px;
+            margin: 20px 0;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid rgba(100, 150, 255, 0.2);
+        }
+        
+        .status-text {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            color: #00ccff;
+            font-weight: 500;
+        }
+        
+        .call-button {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00ccff, #0066ff);
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 150, 255, 0.5);
+            transition: all 0.3s ease;
+        }
+        
+        .number-input input {
+            width: 200px;
+            padding: 12px 15px;
+            border-radius: 12px;
+            background: rgba(10, 15, 30, 0.8);
+            border: 1px solid rgba(100, 150, 255, 0.3);
+            color: white;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #00ccff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <div class="status-display">
+            <div class="status-text" id="statusText">
+                <span class="loading"></span> Connecting to Telnyx...
+            </div>
+        </div>
+        
+        <div class="number-input">
+            <input type="text" id="phoneNumber" placeholder="Enter number to call">
+        </div>
+        
+        <div class="call-controls">
+            <button class="call-button" id="callButton" disabled>CALL</button>
+        </div>
+    </div>
+    
+    <audio id="ringtone" loop>
+        <source src="https://cdn.freesound.org/previews/796/796163_11133212-lq.mp3" type="audio/mpeg">
+    </audio>
+    
+    <audio id="ringback" loop>
+        <source src="https://cdn.freesound.org/previews/571/571407_11497730-lq.mp3" type="audio/mpeg">
+    </audio>
+    
+    <script>
+        // Telnyx SIP credentials
+        const credentials = {
+            sipServer: "wss://sip.telnyx.com:7443",
+            username: "zmfs9g3u",
+            password: "hxouokgw2ao",
+            domain: "sip.telnyx.com"
+        };
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const callButton = document.getElementById('callButton');
+            const statusText = document.getElementById('statusText');
+            const phoneNumber = document.getElementById('phoneNumber');
+            const ringtone = document.getElementById('ringtone');
+            const ringback = document.getElementById('ringback');
+            
+            let userAgent;
+            let session;
+            let isCalling = false;
+            let incomingSession = null;
+            
+            // Initialize SIP connection
+            async function connectToTelnyx() {
+                try {
+                    const configuration = {
+                        uri: `sip:${credentials.username}@${credentials.domain}`,
+                        password: credentials.password,
+                        transportOptions: {
+                            wsServers: [credentials.sipServer],
+                            connectionTimeout: 10000,
+                            maxReconnectionAttempts: 3,
+                            reconnectionTimeout: 5000
+                        },
+                        sessionDescriptionHandlerFactoryOptions: {
+                            constraints: { audio: true, video: false }
+                        },
+                        register: true,
+                        logLevel: 'debug'
+                    };
+                    
+                    userAgent = new SIP.UserAgent(configuration);
+                    
+                    // Start connection
+                    await userAgent.start();
+                    await userAgent.register();
+                    
+                    statusText.innerHTML = `Connected to Telnyx as <strong>${credentials.username}</strong>`;
+                    callButton.disabled = false;
+                    
+                    // Setup incoming call handler
+                    userAgent.delegate = {
+                        onInvite: async (session) => {
+                            incomingSession = session;
+                            const caller = session.remoteIdentity.uri.user || 'Unknown';
+                            
+                            statusText.textContent = 'Incoming call...';
+                            callButton.textContent = 'ANSWER';
+                            callButton.classList.add('answer');
+                            
+                            ringtone.play().catch(e => console.log('Ringtone error:', e));
+                            
+                            incomingSession.delegate = {
+                                onAccepted: () => {
+                                    statusText.textContent = 'Call connected';
+                                    ringtone.pause();
+                                },
+                                onTerminated: () => endCall()
+                            };
+                        }
+                    };
+                    
+                } catch (error) {
+                    console.error('Telnyx connection error:', error);
+                    statusText.textContent = `Connection failed: ${error.message}`;
+                    setTimeout(connectToTelnyx, 5000); // Retry after 5 seconds
+                }
+            }
+            
+            // Make a call
+            async function makeCall() {
+                if (!phoneNumber.value) return;
+                
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    const destination = `sip:${phoneNumber.value}@${credentials.domain}`;
+                    
+                    ringback.play().catch(e => console.log('Ringback error:', e));
+                    
+                    session = userAgent.invite(destination, {
+                        sessionDescriptionHandlerOptions: {
+                            constraints: { audio: true },
+                            audioStream: stream
+                        }
+                    });
+                    
+                    isCalling = true;
+                    callButton.textContent = 'HANG UP';
+                    callButton.classList.add('hangup');
+                    statusText.textContent = 'Calling...';
+                    
+                    session.delegate = {
+                        onAccepted: () => {
+                            statusText.textContent = 'Call connected';
+                            ringback.pause();
+                        },
+                        onTerminated: () => endCall()
+                    };
+                    
+                } catch (error) {
+                    console.error('Call error:', error);
+                    statusText.textContent = `Call failed: ${error.message}`;
+                    endCall();
+                }
+            }
+            
+            // Answer call
+            async function answerCall() {
+                if (!incomingSession) return;
+                
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    await incomingSession.accept({
+                        sessionDescriptionHandlerOptions: {
+                            constraints: { audio: true },
+                            audioStream: stream
+                        }
+                    });
+                    
+                    callButton.textContent = 'HANG UP';
+                    callButton.classList.remove('answer');
+                    callButton.classList.add('hangup');
+                    statusText.textContent = 'Call connected';
+                    ringtone.pause();
+                    
+                    session = incomingSession;
+                    incomingSession = null;
+                    isCalling = true;
+                    
+                } catch (error) {
+                    console.error('Answer error:', error);
+                    statusText.textContent = `Answer failed: ${error.message}`;
+                    endCall();
+                }
+            }
+            
+            // End call
+            function endCall() {
+                if (session) session.bye();
+                if (incomingSession) incomingSession.bye();
+                
+                isCalling = false;
+                callButton.textContent = 'CALL';
+                callButton.classList.remove('hangup', 'answer');
+                statusText.textContent = `Connected to Telnyx as ${credentials.username}`;
+                ringtone.pause();
+                ringback.pause();
+                
+                session = null;
+                incomingSession = null;
+            }
+            
+            // Event listeners
+            callButton.addEventListener('click', async () => {
+                if (callButton.classList.contains('answer')) {
+                    await answerCall();
+                } else if (!isCalling) {
+                    await makeCall();
+                } else {
+                    endCall();
+                }
+            });
+            
+            // Start connection immediately
+            connectToTelnyx();
+        });
+    </script>
+</body>
+</html>
