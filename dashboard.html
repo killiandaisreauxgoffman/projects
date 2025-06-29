@@ -1,9 +1,8 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Killian Daisreaux Goffman</title>
+    <title>Personal Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
@@ -258,53 +257,13 @@
             gap: 15px;
         }
         
-        .user-photo-container {
-            position: relative;
-            width: 70px;
-            height: 70px;
+        .user-avatar {
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
-            overflow: hidden;
             border: 2px solid var(--accent);
-            box-shadow: 0 0 20px rgba(106, 76, 224, 0.5);
-        }
-        
-        .user-photo {
-            width: 100%;
-            height: 100%;
             object-fit: cover;
-            filter: blur(10px);
-            transform: rotate(0deg);
-            transition: all 0.5s ease;
-        }
-        
-        .unblur-form {
-            position: absolute;
-            bottom: 5px;
-            left: 0;
-            right: 0;
-            display: flex;
-            padding: 0 10px;
-        }
-        
-        .unblur-input {
-            flex: 1;
-            padding: 5px 10px;
-            background: rgba(0, 0, 0, 0.7);
-            border: 1px solid var(--accent);
-            border-radius: 5px;
-            color: white;
-            font-size: 0.7rem;
-        }
-        
-        .unblur-btn {
-            background: var(--accent);
-            color: white;
-            border: none;
-            border-radius: 5px;
-            padding: 5px 10px;
-            margin-left: 5px;
-            cursor: pointer;
-            font-size: 0.7rem;
+            box-shadow: 0 0 15px rgba(106, 76, 224, 0.5);
         }
         
         .dashboard-grid {
@@ -410,6 +369,23 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        
+        .alert-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .alert-container::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 3px;
+        }
+        
+        .alert-container::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 3px;
         }
         
         .alert-item {
@@ -435,6 +411,15 @@
         .alert-content p {
             font-size: 0.9rem;
             color: var(--text-secondary);
+        }
+        
+        .alert-content .alert-time {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+           
+
+ opacity: 0.7;
+            margin-top: 5px;
         }
         
         .news-container {
@@ -506,6 +491,13 @@
             color: var(--text-secondary);
         }
         
+        .news-time {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+        
         .encryption-container {
             display: flex;
             flex-direction: column;
@@ -571,13 +563,441 @@
             box-shadow: 0 5px 15px rgba(106, 76, 224, 0.4);
         }
         
-        /* MSN Weather Widget */
-        .msn-weather-container {
-            width: 100%;
+        /* User Profile Widget */
+        .user-profile-widget {
+            position: relative;
             height: 400px;
+            perspective: 1000px;
+        }
+        
+        .encrypted-carousel {
+            position: relative;
+            width: 100%;
+            height: calc(100% - 100px);
+            transform-style: preserve-3d;
+            transition: transform 1s;
+        }
+        
+        .carousel-image {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
             border-radius: 15px;
+            backface-visibility: hidden;
+            transition: filter 0.5s ease, transform 0.5s ease;
+            transform-origin: center center;
+        }
+        
+        .carousel-image.blurred {
+            filter: blur(15px) brightness(0.7);
+            animation: floatAndRotate 20s infinite ease-in-out;
+        }
+        
+        .carousel-controls {
+            position: absolute;
+            bottom: 50px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            z-index: 10;
+        }
+        
+        .carousel-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .carousel-dot.active {
+            background: var(--accent3);
+            transform: scale(1.2);
+        }
+        
+        .decryption-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 15px;
+            z-index: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: transparent;
+        }
+
+        .decryption-form {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            gap: 10px;
+        }
+
+        .decryption-input {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            color: white;
+            font-size: 0.9rem;
+            backdrop-filter: blur(5px);
+        }
+
+        .decryption-btn {
+            width: 100%;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            backdrop-filter: blur(5px);
+        }
+
+        .decryption-btn:hover {
+            background: var(--accent2);
+        }
+        
+        /* System Status Widget - Full Width */
+        .system-status-widget {
+            grid-column: 1 / -1;
+            width: 100%;
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .status-item {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .status-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .status-name {
+            font-size: 1.1rem;
+            color: var(--accent3);
+        }
+        
+        .status-indicator {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .status-indicator.active {
+            background: rgba(0, 224, 255, 0.2);
+            color: var(--accent3);
+        }
+        
+        .status-indicator.warning {
+            background: rgba(255, 165, 0, 0.2);
+            color: orange;
+        }
+        
+        .status-indicator.critical {
+            background: rgba(255, 77, 148, 0.2);
+            color: var(--accent2);
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
             overflow: hidden;
-            border: 1px solid rgba(106, 76, 224, 0.3);
+            margin-top: 10px;
+        }
+        
+        .progress {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        .status-details {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Resume Widget - Full Width */
+        .resume-widget {
+            grid-column: 1 / -1;
+            width: 100%;
+            padding: 30px;
+        }
+
+        .resume-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .resume-name {
+            font-size: 2.5rem;
+            background: linear-gradient(to right, var(--accent3), var(--accent2));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .resume-contact {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+
+        .resume-contact a {
+            color: var(--accent3);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .resume-contact a:hover {
+            color: var(--accent2);
+            text-decoration: underline;
+        }
+
+        .resume-section {
+            margin-bottom: 30px;
+        }
+
+        .resume-section-title {
+            font-size: 1.8rem;
+            color: var(--accent3);
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .resume-content {
+            font-size: 1rem;
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .resume-skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .skill-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .skill-name {
+            font-size: 1.1rem;
+            color: var(--accent3);
+            margin-bottom: 5px;
+        }
+
+        .skill-rating {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .skill-rating::before {
+            content: '★★★★★';
+            color: var(--accent);
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .resume-languages {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .language-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 20px;
+            border-radius: 20px;
+            color: var(--accent3);
+            font-size: 1rem;
+        }
+
+        .employment-item {
+            margin-bottom: 25px;
+        }
+
+        .employment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .employment-title {
+            font-size: 1.2rem;
+            color: var(--accent3);
+        }
+
+        .employment-date {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .employment-details {
+            color: var(--text);
+            list-style-type: none;
+            padding-left: 20px;
+        }
+
+        .employment-details li {
+            position: relative;
+            margin-bottom: 10px;
+        }
+
+        .employment-details li::before {
+            content: '•';
+            position: absolute;
+            left: -20px;
+            color: var(--accent);
+            font-size: 1.2rem;
+        }
+
+        .education-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .education-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .education-title {
+            font-size: 1.1rem;
+            color: var(--accent3);
+            margin-bottom: 5px;
+        }
+
+        .education-degree {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .portfolio-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .portfolio-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .portfolio-item:hover {
+            transform: translateY(-3px);
+            background: rgba(106, 76, 224, 0.1);
+        }
+
+        .portfolio-item a {
+            color: var(--accent3);
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        .portfolio-item a:hover {
+            color: var(--accent2);
+        }
+
+        .download-resume {
+            display: inline-block;
+            background: linear-gradient(45deg, var(--accent), var(--accent2));
+            color: white;
+            padding: 12px 25px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+
+        .download-resume:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(106, 76, 224, 0.4);
+        }
+        
+        /* Animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes floatAndRotate {
+            0%, 100% {
+                transform: translateY(0) rotateY(0) rotateX(0);
+            }
+            25% {
+                transform: translateY(-10px) rotateY(10deg) rotateX(5deg);
+            }
+            50% {
+                transform: translateY(0) rotateY(0) rotateX(0);
+            }
+            75% {
+                transform: translateY(10px) rotateY(-10deg) rotateX(-5deg);
+            }
+        }
+        
+        .cinematic {
+            position: relative;
+        }
+        
+        .cinematic::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                linear-gradient(rgba(0, 0, 0, 0.1) 50%, 
+                rgba(0, 0, 0, 0.25) 50%),
+                linear-gradient(90deg, rgba(0, 0, 0, 0.1) 50%, 
+                rgba(0, 0, 0, 0.25) 50%);
+            background-size: 4px 4px;
+            pointer-events: none;
+            mix-blend-mode: overlay;
         }
         
         /* Loading Spinner */
@@ -602,38 +1022,6 @@
             100% { transform: rotate(360deg); }
         }
         
-        /* Animations */
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        
-        .cinematic {
-            position: relative;
-        }
-        
-        .cinematic::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                linear-gradient(rgba(0, 0, 0, 0.1) 50%, 
-                rgba(0, 0, 0, 0.25) 50%),
-                linear-gradient(90deg, rgba(0, 0, 0, 0.1) 50%, 
-                rgba(0, 0, 0, 0.25) 50%);
-            background-size: 4px 4px;
-            pointer-events: none;
-            mix-blend-mode: overlay;
-        }
-        
         /* Responsive */
         @media (max-width: 768px) {
             .dashboard-grid {
@@ -647,10 +1035,45 @@
             .dashboard-header {
                 flex-direction: column;
                 gap: 20px;
+                text-align: center;
+            }
+            
+            .user-info {
+                justify-content: center;
+                width: 100%;
             }
             
             .zip-form {
                 flex-direction: column;
+            }
+            
+            .user-profile-widget {
+                height: 350px;
+            }
+            
+            .decryption-container {
+                padding: 15px;
+            }
+            
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .resume-skills-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .education-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .portfolio-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .resume-contact {
+                flex-direction: column;
+                gap: 10px;
             }
         }
     </style>
@@ -664,12 +1087,12 @@
         <div class="login-card">
             <div class="login-content">
                 <div class="login-header">
-                    <h1>Personal Admin Panel</h1>
-                    <p>One-time secure login to check local information by ZIP code</p>
+                    <h1>Personal Portal</h1>
+                    <p></p>
                 </div>
                 
                 <div class="password-display">
-                    <h3>Your one-time Generated Access Code</h3>
+                    <h3>One-Time Access Code</h3>
                     <div class="generated-password" id="generated-password">Loading...</div>
                 </div>
                 
@@ -689,36 +1112,29 @@
     <div id="dashboard">
         <div class="container">
             <div class="dashboard-header">
-                <h2 class="dashboard-title">VoIP Engineer Dashboard</h2>
+                <h2 class="dashboard-title">VoIP Engineering | Web Developing | AI Implementing | Telecommunications</h2>
                 <div class="user-info">
-                    <div class="user-photo-container">
-                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1887&q=80" 
-                             alt="User Photo" class="user-photo" id="user-photo">
-                        <div class="unblur-form">
-                            <input type="text" class="unblur-input" id="secret-key" placeholder="Enter Secret Key">
-                            <button class="unblur-btn" id="unblur-btn">Unlock</button>
-                        </div>
-                    </div>
+                    <img src="https://telegra.ph/file/d1cb8f14eb1a4cb685f07.jpg" 
+                         alt="User Avatar" class="user-avatar">
                     <div>
-                        <h3>John Smith</h3>
-                        <p>Senior VoIP Engineer</p>
+                        <h2 class="dashboard-title"></h2>
                     </div>
                 </div>
             </div>
             
             <div class="zip-form">
-                <input type="text" class="zip-input" id="zip-input" placeholder="Enter ZIP Code (e.g., 13601 for Watertown, NY)">
+                <input type="text" class="zip-input" id="zip-input" placeholder="Enter ZIP Code (e.g., 10019 for New York, NY)">
                 <button class="zip-btn" id="zip-btn">Update Location</button>
             </div>
             
             <div class="dashboard-grid">
-                <!-- MSN Weather Widget -->
+                <!-- Weather Widget -->
                 <div class="widget">
                     <div class="widget-header">
                         <h3 class="widget-title"><i class="fas fa-cloud-sun widget-icon"></i> Live Weather</h3>
                         <span class="location" id="weather-location">Loading...</span>
                     </div>
-                    <div id="msn-weather-widget">
+                    <div id="weather-widget">
                         <div class="loading-spinner">
                             <div class="spinner"></div>
                         </div>
@@ -740,7 +1156,7 @@
                 <!-- News Widget -->
                 <div class="widget">
                     <div class="widget-header">
-                        <h3 class="widget-title"><i class="fas fa-newspaper widget-icon"></i> Local News</h3>
+                        <h3 class="widget-title"><i class="fas fa-newspaper widget-icon"></i> Local News & Police Reports</h3>
                     </div>
                     <div class="news-container" id="news-container">
                         <div class="loading-spinner">
@@ -752,14 +1168,301 @@
                 <!-- User Profile Widget -->
                 <div class="widget">
                     <div class="widget-header">
-                        <h3 class="widget-title"><i class="fas fa-user widget-icon"></i> User Profile</h3>
+                        <h3 class="widget-title"><i class="fas fa-user-secret widget-icon"></i> Secure Profile</h3>
                     </div>
-                    <div class="profile-info">
-                        <p><strong>Name:</strong> John Smith</p>
-                        <p><strong>Role:</strong> Senior VoIP Engineer</p>
-                        <p><strong>Security Clearance:</strong> Level 5</p>
-                        <p><strong>Last Login:</strong> Today, <span id="login-time">14:32</span></p>
-                        <p><strong>Status:</strong> <span style="color: var(--accent3);">Active</span></p>
+                    <div class="user-profile-widget">
+                        <div class="encrypted-carousel" id="encrypted-carousel">
+                            <!-- Encrypted images will be added here by JavaScript -->
+                        </div>
+                        <div class="carousel-controls" id="carousel-controls">
+                            <!-- Dots will be added here by JavaScript -->
+                        </div>
+                        <div class="decryption-container">
+                            <div class="decryption-form">
+                                <input type="password" class="decryption-input" id="decryption-key" placeholder="Decryption key">
+                                <button class="decryption-btn" id="decryption-btn">Decrypt</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Resume Widget - Full Width -->
+                <div class="widget resume-widget">
+                    
+                    <div class="resume-header">
+                        <h1 class="resume-name">KILLIAN DAISREAUX GOFFMAN</h1>
+                        <div class="resume-contact">
+                            <span><i class="fas fa-map-marker-alt"></i> New York City</span>
+                            <span><i class="fas fa-phone"></i> <a href="tel:K1UGV10LAJ">K1UGV10LAJ</a></span>
+                            <span><i class="fas fa-envelope"></i> <a href="mailto:Killian@Daisreaux.com">Killian@Daisreaux.com</a></span>
+                        </div>
+                    </div>
+                    
+                    <div class="resume-section">
+                        <h2 class="resume-section-title"><i class="fas fa-file-alt widget-icon"></i> Profile</h2>
+                        <p class="resume-content">
+                            Dedicated and highly skilled VoIP Architect with extensive experience in designing and implementing Voice over IP (VoIP) solutions. Demonstrated expertise in engineering robust, scalable, and secure VoIP infrastructures, delivering seamless communication experiences for organizations across diverse industries. Adept at analyzing business requirements, assessing technical feasibility, and designing efficient solutions that align with organizational objectives. Proven track record of successfully leading and collaborating with cross-functional teams to ensure the successful implementation of many complex VoIP projects globally.
+                        </p>
+                    </div>
+                    
+                    <div class="resume-section">
+                        <h2 class="resume-section-title">Skills</h2>
+                        <div class="resume-skills-grid">
+                            <div class="skill-item">
+                                <div class="skill-name">Industry Knowledge</div>
+                                <div class="skill-rating"></div>
+                            </div>
+                            <div class="skill-item">
+                                <div class="skill-name">Business Development</div>
+                                <div class="skill-rating"></div>
+                            </div>
+                            <div class="skill-item">
+                                <div class="skill-name">Strategies</div>
+                                <div class="skill-rating"></div>
+                            </div>
+                            <div class="skill-item">
+                                <div class="skill-name">Interpersonal</div>
+                                <div class="skill-rating"></div>
+                            </div>
+                            <div class="skill-item">
+                                <div class="skill-name">Communication Skills</div>
+                                <div class="skill-rating"></div>
+                            </div>
+                            <div class="skill-item">
+                                <div class="skill-name">Innovative Problem Solving</div>
+                                <div class="skill-rating"></div>
+                            </div>
+                            <div class="skill-item">
+                                <div class="skill-name">Project Management Skills</div>
+                                <div class="skill-rating"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="resume-section">
+                        <h2 class="resume-section-title">Languages</h2>
+                        <div class="resume-languages">
+                            <span class="language-item">English</span>
+                            <span class="language-item">Russian</span>
+                            <span class="language-item">Ukrainian</span>
+                        </div>
+                    </div>
+                    
+                    <div class="resume-section">
+                        <h2 class="resume-section-title">Employment History</h2>
+                        <div class="employment-item">
+                            <div class="employment-header">
+                                <span class="employment-title">VoIP & Website Developer (Front End, Back End) | Self Employed</span>
+                                <span class="employment-date">Jan 2011 - Present</span>
+                            </div>
+                            <ul class="employment-details">
+                                <li>Developed personal web pages (landing pages, full desktop and mobile versions websites) using PHP, Python, HTML, CSS, as well as integrating Asterisk for business</li>
+                                <li>Created a Telegram Bot for selling Premium IPRN SMS/Voice numbers, high-rate Premium IPRN numbers, regular global numbers to receive SMS or calls to register in social networks</li>
+                                <li>Designed and built call centers for businesses with remote access for representatives to answer calls remotely</li>
+                                <li>Created IVRs, queues, music on hold, call transferring, and call recording</li>
+                                <li>Developed personal web pages with admin dashboards for managers to remotely get access and check representatives status (online, on phone conversations, offline etc.)</li>
+                                <li>Worked with MySQL to create databases and securely store customer information</li>
+                            </ul>
+                        </div>
+                        <div class="employment-item">
+                            <div class="employment-header">
+                                <span class="employment-title">Junior Python/ API/ VoIP Developer | NAKA Mobile | Sirnach, Switzerland</span>
+                                <span class="employment-date">Jan 2017 - Apr 2020</span>
+                            </div>
+                            <ul class="employment-details">
+                                <li>Utilized API to create a bot to communicate with customers through Telegram</li>
+                                <li>Used Naka Mobile API and Telegram API to establish calls between SIM card users and application users</li>
+                                <li>Programmed global roaming-free SIM cards with different profiles for global use without the need for a local Sim card</li>
+                                <li>Monitored voice and SMS traffic for network stability</li>
+                                <li>Performed maintenance and upgrades to servers, as well as regularly adding new features for Telegram users as free app to contact to sim card users around the world</li>
+                                <li>Received/Sent calls and SMS messages through Telegram bot</li>
+                                <li>Worked with HLR lookup and Premium numbers</li>
+                            </ul>
+                        </div>
+                        <div class="employment-item">
+                            <div class="employment-header">
+                                <span class="employment-title">Account Executive | Leader Cosmetics Perfume | Kharkiv, Ukraine</span>
+                                <span class="employment-date">Aug 2010 - Feb 2012</span>
+                            </div>
+                            <ul class="employment-details">
+                                <li>Developed a user-friendly website that boosted brand awareness</li>
+                                <li>Assisted in negotiation of distribution contracts for major cosmetic companies</li>
+                                <li>Oversaw operations at several locations including Barabashovo Market- one of the largest markets in all of Europe</li>
+                                <li>Developed a budget and managed store expenses to ensure profitability</li>
+                            </ul>
+                        </div>
+                        <div class="employment-item">
+                            <div class="employment-header">
+                                <span class="employment-title">Regional Manager | Supermarket Nash | Kharkiv, Ukraine</span>
+                                <span class="employment-date">Jan 2008 - Aug 2010</span>
+                            </div>
+                            <ul class="employment-details">
+                                <li>Developed and maintained a regional budget that allowed for the successful expansion of operations into 5 new locations</li>
+                                <li>Analyzed regional sales data to identify key trends and insights that drove decision-making and strategic planning</li>
+                                <li>Analyzed market trends and competitor strategies to inform decisions and optimize marketing efforts</li>
+                            </ul>
+                        </div>
+                        <div class="employment-item">
+                            <div class="employment-header">
+                                <span class="employment-title">Regional Manager | MD Retail | Kharkiv, Ukraine</span>
+                                <span class="employment-date">Dec 2005 - Dec 2007</span>
+                            </div>
+                            <ul class="employment-details">
+                                <li>Established effective relationships with regional vendors to reduce costs and improve product availability</li>
+                                <li>Utilized CRM software to track customer data, interactions, and activity, resulting in improved customer service</li>
+                                <li>Analyzed customer data to uncover opportunities for upselling and cross-selling products</li>
+                                <li>Maximized customer satisfaction through regular follow-up and proactive problem resolution</li>
+                            </ul>
+                        </div>
+                        <div class="employment-item">
+                            <div class="employment-header">
+                                <span class="employment-title">Junior Developer | Ukrtelecom | Kharkiv, Ukraine</span>
+                                <span class="employment-date">Feb 2003 - Nov 2005</span>
+                            </div>
+                            <ul class="employment-details">
+                                <li>Designed, engineered, and maintained an Asterisk based call center system</li>
+                                <li>Created a custom logging system to capture and store system data for debugging and analytics</li>
+                                <li>Implemented a microservices architecture that improved system modularity and reduced dependencies between components</li>
+                                <li>Implemented automated monitoring and alerting to quickly identify and resolve system issues</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="resume-section">
+                        <h2 class="resume-section-title">Education</h2>
+                        <div class="education-grid">
+                            <div class="education-item">
+                                <div class="education-title">Kharkiv College of the State University of Telecommunications</div>
+                                <div class="education-degree">Master Degree</div>
+                            </div>
+                            <div class="education-item">
+                                <div class="education-title">The O.S. Popov Odesa National Academy of Telecommunications</div>
+                                <div class="education-degree">Master Degree</div>
+                            </div>
+                            <div class="education-item">
+                                <div class="education-title">The Military Institute of Telecommunication and Information Technologies</div>
+                                <div class="education-degree">Master Degree</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="resume-section">
+                        <h2 class="resume-section-title">Portfolio</h2>
+                        <div class="portfolio-grid">
+                            <div class="portfolio-item">
+                                <a href="https://example.com/questionnaire" target="_blank">Questionnaire</a>
+                            </div>
+                            <div class="portfolio-item">
+                                <a href="https://example.com/resume-builder" target="_blank">Resume Builder</a>
+                            </div>
+                            <div class="portfolio-item">
+                                <a href="https://example.com/gpa-testing" target="_blank">GPA Testing</a>
+                            </div>
+                            <div class="portfolio-item">
+                                <a href="https://example.com/fast-typing-trainer" target="_blank">Fast Typing Trainer</a>
+                            </div>
+                            <div class="portfolio-item">
+                                <a href="https://example.com/global-tv" target="_blank">Global TV</a>
+                            </div>
+                            <div class="portfolio-item">
+                                <a href="https://example.com/e-commerce" target="_blank">E-commerce</a>
+                            </div>
+                            <div class="portfolio-item">
+                                <a href="https://example.com/admin-dashboard" target="_blank">Admin Dashboard</a>
+                            </div>
+                            <div class="portfolio-item">
+                                <a href="https://example.com/fetch-information" target="_blank">Fetch Information</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <a href="https://telegra.ph/KILLIAN-DAISREAUX-GOFFMAN-01-01" class="download-resume" target="_blank">Download Resume as PDF</a>
+                </div>
+                
+                <!-- System Status Widget - Full Width -->
+                <div class="widget system-status-widget">
+                    <div class="widget-header">
+                        <h3 class="widget-title"><i class="fas fa-server widget-icon"></i> System Status</h3>
+                    </div>
+                    <div class="status-grid">
+                        <div class="status-item">
+                            <div class="status-header">
+                                <span class="status-name">VoIP Servers</span>
+                                <span class="status-indicator active">Online</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress" style="width: 85%; background: var(--accent3);"></div>
+                            </div>
+                            <div class="status-details">
+                                <span>85% Utilization</span>
+                                <span>12.5K calls/min</span>
+                            </div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-header">
+                                <span class="status-name">Security Gateways</span>
+                                <span class="status-indicator active">Online</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress" style="width: 92%; background: var(--accent3);"></div>
+                            </div>
+                            <div class="status-details">
+                                <span>92% Capacity</span>
+                                <span>1.2M packets/sec</span>
+                            </div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-header">
+                                <span class="status-name">Database Cluster</span>
+                                <span class="status-indicator warning">Warning</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress" style="width: 65%; background: orange;"></div>
+                            </div>
+                            <div class="status-details">
+                                <span>65% Load</span>
+                                <span>Replication lag: 1.2s</span>
+                            </div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-header">
+                                <span class="status-name">Network Latency</span>
+                                <span class="status-indicator active">Normal</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress" style="width: 45%; background: var(--accent3);"></div>
+                            </div>
+                            <div class="status-details">
+                                <span>45ms avg</span>
+                                <span>99th %ile: 82ms</span>
+                            </div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-header">
+                                <span class="status-name">Storage Cluster</span>
+                                <span class="status-indicator active">Online</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress" style="width: 78%; background: var(--accent3);"></div>
+                            </div>
+                            <div class="status-details">
+                                <span>78% Capacity</span>
+                                <span>IOPS: 12.5K</span>
+                            </div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-header">
+                                <span class="status-name">API Services</span>
+                                <span class="status-indicator critical">Degraded</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress" style="width: 35%; background: var(--accent2);"></div>
+                            </div>
+                            <div class="status-details">
+                                <span>35% Success Rate</span>
+                                <span>Retries: 12%</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
@@ -774,33 +1477,6 @@
                         <div class="encryption-result" id="base64-output">Processing...</div>
                         <div class="encryption-label">HEX Encoded:</div>
                         <div class="encryption-result" id="hex-output">Processing...</div>
-                    </div>
-                </div>
-                
-                <!-- System Status Widget -->
-                <div class="widget">
-                    <div class="widget-header">
-                        <h3 class="widget-title"><i class="fas fa-server widget-icon"></i> System Status</h3>
-                    </div>
-                    <div class="status-container">
-                        <div class="status-item">
-                            <p>VoIP Servers <span class="status-indicator active">Online</span></p>
-                            <div class="progress-bar">
-                                <div class="progress" style="width: 85%;"></div>
-                            </div>
-                        </div>
-                        <div class="status-item">
-                            <p>Security Gateways <span class="status-indicator active">Online</span></p>
-                            <div class="progress-bar">
-                                <div class="progress" style="width: 92%;"></div>
-                            </div>
-                        </div>
-                        <div class="status-item">
-                            <p>Database Cluster <span class="status-indicator warning">Warning</span></p>
-                            <div class="progress-bar">
-                                <div class="progress" style="width: 65%; background: orange;"></div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -838,7 +1514,7 @@
         
         // Generate random password
         function generatePassword() {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()';
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%&*';
             let password = '';
             const length = 12;
             
@@ -851,9 +1527,9 @@
         
         // Encrypt the attachment content using AES-256 ECB
         function encryptAttachment() {
-            const secretKey = "KillianDaisreauxGoffman";
-            const iv = "KillianDaisreauxGoffman";
-            const plaintext = "Secret Key\nResponsivos And Android\nResponse We";
+            const secretKey = "DevelopedByKillianDaisreauxGoffman";
+            const iv = "DevelopedByKillianDaisreauxGoffman";
+            const plaintext = "DevelopedByKillianDaisreauxGoffman";
             
             // Key needs to be 256 bits (32 bytes)
             // Pad the key to 32 bytes if needed
@@ -880,80 +1556,23 @@
             return { base64, hex };
         }
         
-        // Fetch weather data based on ZIP code
+        // Fetch weather data from API
         async function fetchWeatherData(zipCode) {
             try {
-                // In a real application, you would use a weather API here
-                // For demonstration, we'll simulate fetching data
-                
                 // Show loading state
-                document.getElementById('msn-weather-widget').innerHTML = `
+                document.getElementById('weather-widget').innerHTML = `
                     <div class="loading-spinner">
                         <div class="spinner"></div>
                     </div>
                 `;
                 
-                // Simulate API delay
-                await new Promise(resolve => setTimeout(resolve, 1500));
-                
-                // Get current time
-                const now = new Date();
-                const hours = now.getHours();
-                const minutes = now.getMinutes().toString().padStart(2, '0');
-                const timeString = `${hours}:${minutes}`;
-                document.getElementById('login-time').textContent = timeString;
-                
-                // Determine weather based on time of day (for demo purposes)
-                let weatherData;
-                if (hours >= 6 && hours < 18) {
-                    // Daytime
-                    weatherData = {
-                        location: zipCode === '13601' ? 'Watertown, NY' : `Location for ZIP: ${zipCode}`,
-                        temp: Math.floor(Math.random() * 15) + 65, // 65-80°F
-                        condition: 'Sunny',
-                        icon: 'fa-sun',
-                        humidity: Math.floor(Math.random() * 30) + 50, // 50-80%
-                        wind: Math.floor(Math.random() * 10) + 5, // 5-15 mph
-                        alerts: [
-                            {
-                                type: 'weather',
-                                title: 'UV Warning',
-                                message: 'High UV index expected today. Wear sunscreen.'
-                            },
-                            {
-                                type: 'traffic',
-                                title: 'Road Construction',
-                                message: 'Construction on Route 11 expected until 5 PM.'
-                            }
-                        ]
-                    };
-                } else {
-                    // Nighttime
-                    weatherData = {
-                        location: zipCode === '13601' ? 'Watertown, NY' : `Location for ZIP: ${zipCode}`,
-                        temp: Math.floor(Math.random() * 15) + 45, // 45-60°F
-                        condition: 'Clear',
-                        icon: 'fa-moon',
-                        humidity: Math.floor(Math.random() * 30) + 50, // 50-80%
-                        wind: Math.floor(Math.random() * 10) + 5, // 5-15 mph
-                        alerts: [
-                            {
-                                type: 'weather',
-                                title: 'Frost Advisory',
-                                message: 'Temperatures dropping below freezing overnight.'
-                            },
-                            {
-                                type: 'traffic',
-                                title: 'Accident Reported',
-                                message: 'Accident on I-81 near exit 45. Expect delays.'
-                            }
-                        ]
-                    };
-                }
+                // In a real implementation, you would call a weather API here
+                // For demo purposes, we'll simulate API response
+                const weatherData = await simulateWeatherAPI(zipCode);
                 
                 // Update weather widget
                 document.getElementById('weather-location').textContent = weatherData.location;
-                document.getElementById('msn-weather-widget').innerHTML = `
+                document.getElementById('weather-widget').innerHTML = `
                     <div class="weather-container">
                         <i class="fas ${weatherData.icon} weather-icon"></i>
                         <div class="weather-temp">${weatherData.temp}°F</div>
@@ -969,63 +1588,182 @@
                             </div>
                             <div class="weather-item">
                                 <div class="label">Pressure</div>
-                                <div class="value">${Math.floor(Math.random() * 10) + 1010} hPa</div>
+                                <div class="value">${weatherData.pressure} hPa</div>
                             </div>
                             <div class="weather-item">
                                 <div class="label">Visibility</div>
-                                <div class="value">10 mi</div>
+                                <div class="value">${weatherData.visibility} mi</div>
                             </div>
                         </div>
                     </div>
                 `;
                 
                 // Update alerts
-                const alertsContainer = document.getElementById('alerts-container');
-                alertsContainer.innerHTML = '';
+                updateAlerts(weatherData.alerts);
                 
-                weatherData.alerts.forEach(alert => {
-                    const alertElement = document.createElement('div');
-                    alertElement.className = 'alert-item';
-                    alertElement.innerHTML = `
-                        <i class="fas ${alert.type === 'weather' ? 'fa-cloud-showers-heavy' : 'fa-traffic-light'} alert-icon"></i>
+                // Update news
+                updateNews(zipCode);
+                
+            } catch (error) {
+                console.error('Error fetching weather data:', error);
+                document.getElementById('weather-widget').innerHTML = `
+                    <div class="alert-item">
+                        <i class="fas fa-exclamation-circle alert-icon"></i>
                         <div class="alert-content">
-                            <h4>${alert.title}</h4>
-                            <p>${alert.message}</p>
+                            <h4>Weather Data Error</h4>
+                            <p>Failed to load weather data. Please try again later.</p>
                         </div>
-                    `;
-                    alertsContainer.appendChild(alertElement);
+                    </div>
+                `;
+            }
+        }
+        
+        // Simulate weather API response
+        async function simulateWeatherAPI(zipCode) {
+            // Simulate API delay
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            const now = new Date();
+            const hours = now.getHours();
+            const isDaytime = hours >= 6 && hours < 18;
+            
+            return {
+                location: zipCode === '13601' ? 'Watertown, NY' : `Location for ZIP: ${zipCode}`,
+                temp: isDaytime ? Math.floor(Math.random() * 15) + 65 : Math.floor(Math.random() * 15) + 45,
+                condition: isDaytime ? 'Sunny' : 'Clear',
+                icon: isDaytime ? 'fa-sun' : 'fa-moon',
+                humidity: Math.floor(Math.random() * 30) + 50,
+                wind: Math.floor(Math.random() * 10) + 5,
+                pressure: Math.floor(Math.random() * 10) + 1010,
+                visibility: Math.floor(Math.random() * 5) + 5,
+                alerts: generateAlerts(zipCode, isDaytime)
+            };
+        }
+        
+        // Generate sample alerts
+        function generateAlerts(zipCode, isDaytime) {
+            const alerts = [];
+            const now = new Date();
+            
+            // Weather alerts
+            if (Math.random() > 0.5) {
+                alerts.push({
+                    type: 'weather',
+                    title: isDaytime ? 'UV Warning' : 'Frost Advisory',
+                    message: isDaytime 
+                        ? 'High UV index expected today. Wear sunscreen.' 
+                        : 'Temperatures dropping below freezing overnight.',
+                    time: now.toLocaleTimeString()
                 });
+            }
+            
+            // Traffic alerts
+            if (Math.random() > 0.5) {
+                alerts.push({
+                    type: 'traffic',
+                    title: 'Road Construction',
+                    message: 'Construction on Main Street expected until 5 PM.',
+                    time: now.toLocaleTimeString()
+                });
+            }
+            
+            // Police alerts
+            if (Math.random() > 0.5) {
+                alerts.push({
+                    type: 'police',
+                    title: 'Police Activity',
+                    message: 'Increased police presence in downtown area.',
+                    time: now.toLocaleTimeString()
+                });
+            }
+            
+            return alerts;
+        }
+        
+        // Update alerts container
+        function updateAlerts(alerts) {
+            const container = document.getElementById('alerts-container');
+            
+            if (alerts.length === 0) {
+                container.innerHTML = `
+                    <div class="alert-item">
+                        <i class="fas fa-check-circle alert-icon" style="color: var(--accent3);"></i>
+                        <div class="alert-content">
+                            <h4>No Active Alerts</h4>
+                            <p>There are currently no weather or traffic alerts for your area.</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            alerts.forEach(alert => {
+                const alertElement = document.createElement('div');
+                alertElement.className = 'alert-item';
                 
-                // Update news based on location
-                const newsContainer = document.getElementById('news-container');
-                newsContainer.innerHTML = '';
+                let icon = 'fa-exclamation-triangle';
+                if (alert.type === 'traffic') icon = 'fa-traffic-light';
+                if (alert.type === 'police') icon = 'fa-shield-alt';
                 
+                alertElement.innerHTML = `
+                    <i class="fas ${icon} alert-icon"></i>
+                    <div class="alert-content">
+                        <h4>${alert.title}</h4>
+                        <p>${alert.message}</p>
+                        <div class="alert-time">${alert.time}</div>
+                    </div>
+                `;
+                container.appendChild(alertElement);
+            });
+        }
+        
+        // Update news container
+        function updateNews(zipCode) {
+            const container = document.getElementById('news-container');
+            
+            // Simulate fetching news from API
+            setTimeout(() => {
                 const newsItems = [
                     {
                         source: 'Police Department',
                         icon: 'fa-shield-alt',
-                        title: 'Community Safety Meeting',
-                        desc: 'Local police to hold community safety meeting this Thursday at 6 PM.'
+                        title: 'Community Safety Initiative',
+                        desc: 'Local police announce new neighborhood watch program to improve community safety.',
+                        time: '2 hours ago'
                     },
                     {
                         source: 'State Police',
                         icon: 'fa-car',
-                        title: 'DUI Checkpoint Announcement',
-                        desc: 'State police to conduct DUI checkpoint this weekend on Route 3.'
+                        title: 'DUI Checkpoint Results',
+                        desc: 'State police report 3 arrests during weekend DUI checkpoint.',
+                        time: '5 hours ago'
                     },
                     {
                         source: 'Channel 7 News',
                         icon: 'fa-tv',
-                        title: 'Local Tech Expansion',
-                        desc: 'Tech company announces expansion, bringing 200 new jobs to the area.'
+                        title: 'Tech Conference Announcement',
+                        desc: 'Annual cybersecurity conference to feature top experts in the field.',
+                        time: 'Yesterday'
                     },
                     {
                         source: 'Traffic Report',
                         icon: 'fa-traffic-light',
                         title: 'Bridge Construction Update',
-                        desc: 'Main Street bridge construction to begin next Monday, detours in place.'
+                        desc: 'Main Street bridge construction to begin next Monday, detours in place.',
+                        time: 'Yesterday'
+                    },
+                    {
+                        source: 'Local News',
+                        icon: 'fa-newspaper',
+                        title: 'New VoIP Security Protocol',
+                        desc: 'Industry leaders announce new security standards for VoIP communications.',
+                        time: '2 days ago'
                     }
                 ];
+                
+                container.innerHTML = '';
                 
                 newsItems.forEach(news => {
                     const newsElement = document.createElement('div');
@@ -1037,21 +1775,167 @@
                         </div>
                         <h4 class="news-title">${news.title}</h4>
                         <p class="news-desc">${news.desc}</p>
+                        <div class="news-time">${news.time}</div>
                     `;
-                    newsContainer.appendChild(newsElement);
+                    container.appendChild(newsElement);
+                });
+            }, 800);
+        }
+        
+        // Encrypted image carousel functionality
+        class EncryptedImageCarousel {
+            constructor() {
+                this.carousel = document.getElementById('encrypted-carousel');
+                this.controls = document.getElementById('carousel-controls');
+                this.decryptionKeyInput = document.getElementById('decryption-key');
+                this.decryptionBtn = document.getElementById('decryption-btn');
+                this.currentIndex = 0;
+                this.images = [];
+                this.validPasswords = [
+                    "u&)~9)B&Rrp&",
+                    "20Mix;<.PT(x",
+                    "bNnn=rZ$e2.I",
+                    "cDLf?&Us(6j.",
+                    "FVZ3&3<mt7ic",
+                    "HuE?A*|8>/]{",
+                    "Kam06%DWjrf5",
+                    "5<n@wn+PrOk<",
+                    "6vT%TnVA12[7",
+                    "]ylcVXC=t4_p"
+                ];
+                this.encryptedImages = [
+                    {
+                        encryptedData: "U2FsdGVkX1+3v6JzJkR7X9J8K4nZ2wLmRtFvQy5pN1c=",
+                        previewUrl: "https://drive.google.com/file/d/1JIEjR0o7nY9bXHns3szgpkn66uCYmILI/view?usp=sharing"
+                    },
+                    {
+                        encryptedData: "U2FsdGVkX1+9k8LwYqGtHjKlOp4NzXr7Sv2BmCnD6E=",
+                        previewUrl: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80"
+                    },
+                    {
+                        encryptedData: "U2FsdGVkX1+5m7VzRkQwP3xLpGtHjKlOp4NzXr7Sv=",
+                        previewUrl: "https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80"
+                    }
+                ];
+                
+                this.initCarousel();
+                this.setupEventListeners();
+                this.startCarouselRotation();
+            }
+            
+            initCarousel() {
+                // Create image elements
+                this.encryptedImages.forEach((img, index) => {
+                    const imgElement = document.createElement('img');
+                    imgElement.src = img.previewUrl;
+                    imgElement.classList.add('carousel-image', 'blurred');
+                    imgElement.dataset.encrypted = img.encryptedData;
+                    imgElement.dataset.index = index;
+                    imgElement.style.transform = `rotateY(${index * 120}deg) translateZ(250px)`;
+                    this.carousel.appendChild(imgElement);
+                    this.images.push(imgElement);
+                    
+                    // Create control dots
+                    const dot = document.createElement('div');
+                    dot.classList.add('carousel-dot');
+                    if (index === 0) dot.classList.add('active');
+                    dot.dataset.index = index;
+                    this.controls.appendChild(dot);
+                });
+            }
+            
+            setupEventListeners() {
+                // Handle decryption button click
+                this.decryptionBtn.addEventListener('click', () => {
+                    this.decryptCurrentImage();
                 });
                 
-            } catch (error) {
-                console.error('Error fetching weather data:', error);
-                document.getElementById('msn-weather-widget').innerHTML = `
-                    <div class="alert-item">
-                        <i class="fas fa-exclamation-circle alert-icon"></i>
-                        <div class="alert-content">
-                            <h4>Weather Data Error</h4>
-                            <p>Failed to load weather data. Please try again later.</p>
-                        </div>
-                    </div>
-                `;
+                // Handle Enter key in decryption input
+                this.decryptionKeyInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.decryptCurrentImage();
+                    }
+                });
+                
+                // Handle dot navigation
+                this.controls.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('carousel-dot')) {
+                        const index = parseInt(e.target.dataset.index);
+                        this.goToImage(index);
+                    }
+                });
+            }
+            
+            startCarouselRotation() {
+                setInterval(() => {
+                    this.nextImage();
+                }, 5000);
+            }
+            
+            nextImage() {
+                this.currentIndex = (this.currentIndex + 1) % this.images.length;
+                this.updateCarousel();
+            }
+            
+            goToImage(index) {
+                this.currentIndex = index;
+                this.updateCarousel();
+            }
+            
+            updateCarousel() {
+                // Update carousel position
+                const angle = this.currentIndex * -120;
+                this.carousel.style.transform = `rotateY(${angle}deg)`;
+                
+                // Update active dot
+                document.querySelectorAll('.carousel-dot').forEach((dot, i) => {
+                    if (i === this.currentIndex) {
+                        dot.classList.add('active');
+                    } else {
+                        dot.classList.remove('active');
+                    }
+                });
+            }
+            
+            decryptCurrentImage() {
+                const password = this.decryptionKeyInput.value;
+                const currentImage = this.images[this.currentIndex];
+                
+                if (this.validPasswords.includes(password)) {
+                    try {
+                        // In a real implementation, you would decrypt the actual image data
+                        // For this example, we'll just unblur the preview image
+                        currentImage.classList.remove('blurred');
+                        currentImage.style.animation = 'none';
+                        currentImage.style.transform = 'rotateY(0) translateZ(250px)';
+                        
+                        // Show success message
+                        const successMsg = document.createElement('div');
+                        successMsg.className = 'alert-item';
+                        successMsg.innerHTML = `
+                            <i class="fas fa-check-circle alert-icon" style="color: var(--accent3);"></i>
+                            <div class="alert-content">
+                                <h4>Decryption Successful</h4>
+                                <p>Image has been unlocked and decrypted.</p>
+                            </div>
+                        `;
+                        
+                        // Insert success message temporarily
+                        const decryptionContainer = document.querySelector('.decryption-container');
+                        decryptionContainer.insertBefore(successMsg, decryptionContainer.firstChild);
+                        
+                        // Remove after 3 seconds
+                        setTimeout(() => {
+                            successMsg.remove();
+                        }, 3000);
+                    } catch (error) {
+                        alert('Decryption failed. Invalid key or corrupted data.');
+                    }
+                } else {
+                    alert('Invalid decryption key!');
+                }
+                
+                this.decryptionKeyInput.value = '';
             }
         }
         
@@ -1081,30 +1965,12 @@
                     
                     // Load default weather data (Watertown, NY)
                     fetchWeatherData('13601');
+                    
+                    // Initialize the encrypted image carousel
+                    new EncryptedImageCarousel();
                 } else {
                     alert('Invalid access code! Please try again.');
                     document.getElementById('password').value = '';
-                }
-            });
-            
-            // Handle secret key for unblurring photo
-            const unblurBtn = document.getElementById('unblur-btn');
-            unblurBtn.addEventListener('click', function() {
-                const secretKey = document.getElementById('secret-key').value;
-                const userPhoto = document.getElementById('user-photo');
-                
-                if (secretKey === "KillianDaisreauxGoffman") {
-                    userPhoto.style.filter = 'blur(0)';
-                    userPhoto.style.transform = 'rotate(0)';
-                    userPhoto.classList.add('cinematic');
-                    
-                    // Add cinematic filter effect
-                    setTimeout(() => {
-                        userPhoto.style.opacity = '0.9';
-                        userPhoto.style.filter = 'grayscale(20%) brightness(110%) contrast(120%)';
-                    }, 1000);
-                } else {
-                    alert('Invalid secret key!');
                 }
             });
             
@@ -1125,17 +1991,6 @@
                     zipBtn.click();
                 }
             });
-            
-            // Add animation to weather icons
-            const weatherIcon = document.querySelector('.weather-icon');
-            if (weatherIcon) {
-                setInterval(() => {
-                    weatherIcon.style.animation = 'none';
-                    setTimeout(() => {
-                        weatherIcon.style.animation = 'float 3s infinite ease-in-out';
-                    }, 10);
-                }, 3000);
-            }
         });
     </script>
 </body>
