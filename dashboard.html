@@ -5,6 +5,7 @@
     <title>Personal Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
             --primary: #0c0e1b;
@@ -416,9 +417,7 @@
         .alert-content .alert-time {
             font-size: 0.8rem;
             color: var(--text-secondary);
-           
-
- opacity: 0.7;
+            opacity: 0.7;
             margin-top: 5px;
         }
         
@@ -958,6 +957,236 @@
             box-shadow: 0 5px 15px rgba(106, 76, 224, 0.4);
         }
         
+        /* WebPhone Widget */
+        .webphone-widget {
+            position: relative;
+        }
+        
+        .webphone-container {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(106, 76, 224, 0.5);
+        }
+        
+        .webphone-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .webphone-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-indicator-webphone {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff4d4d;
+        }
+        
+        .status-indicator-webphone.active {
+            background: #00ff99;
+            box-shadow: 0 0 10px #00ff99;
+        }
+        
+        .webphone-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .webphone-input {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(106, 76, 224, 0.5);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 1rem;
+        }
+        
+        .webphone-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .webphone-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .webphone-btn.call {
+            background: linear-gradient(45deg, #00cc66, #00aa55);
+        }
+        
+        .webphone-btn.hangup {
+            background: linear-gradient(45deg, #ff3366, #cc0000);
+        }
+        
+        .webphone-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .webphone-audio-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-top: 15px;
+            height: 20px;
+        }
+        
+        .webphone-bar {
+            width: 4px;
+            height: 20px;
+            background: var(--accent3);
+            border-radius: 2px;
+            animation: audioBars 1.2s infinite ease-in-out;
+        }
+        
+        .webphone-bar:nth-child(1) { animation-delay: 0s; height: 10px; }
+        .webphone-bar:nth-child(2) { animation-delay: 0.2s; height: 18px; }
+        .webphone-bar:nth-child(3) { animation-delay: 0.4s; height: 25px; }
+        .webphone-bar:nth-child(4) { animation-delay: 0.6s; height: 18px; }
+        .webphone-bar:nth-child(5) { animation-delay: 0.8s; height: 10px; }
+        
+        /* Chat Widget */
+        .chat-widget {
+            position: relative;
+        }
+        
+        .chat-container {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(106, 76, 224, 0.5);
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            padding-right: 10px;
+        }
+        
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 3px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 3px;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 10px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        
+        .message.user {
+            background: rgba(106, 76, 224, 0.3);
+            margin-left: auto;
+            border-bottom-right-radius: 0;
+        }
+        
+        .message.bot {
+            background: rgba(0, 224, 255, 0.2);
+            margin-right: auto;
+            border-bottom-left-radius: 0;
+        }
+        
+        .message-time {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+            text-align: right;
+        }
+        
+        .chat-input-container {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chat-input {
+            flex: 1;
+            padding: 12px 15px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(106, 76, 224, 0.5);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 1rem;
+        }
+        
+        .chat-send-btn {
+            padding: 12px 20px;
+            background: linear-gradient(45deg, var(--accent), var(--accent2));
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .chat-send-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(106, 76, 224, 0.4);
+        }
+        
+        .file-input-container {
+            position: relative;
+            margin-top: 10px;
+        }
+        
+        .file-input-label {
+            display: block;
+            padding: 8px 12px;
+            background: rgba(106, 76, 224, 0.3);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .file-input-label:hover {
+            background: rgba(106, 76, 224, 0.5);
+        }
+        
+        .file-input {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
+        }
+        
         /* Animations */
         @keyframes float {
             0%, 100% { transform: translateY(0); }
@@ -977,6 +1206,11 @@
             75% {
                 transform: translateY(10px) rotateY(-10deg) rotateX(-5deg);
             }
+        }
+        
+        @keyframes audioBars {
+            0%, 100% { transform: scaleY(0.5); }
+            50% { transform: scaleY(1.5); }
         }
         
         .cinematic {
@@ -1020,6 +1254,46 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+        
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(10, 15, 35, 0.9);
+            border-radius: 12px;
+            padding: 15px 20px;
+            border-left: 4px solid #00ccff;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification h3 {
+            color: #00ccff;
+            margin-bottom: 5px;
+        }
+        
+        .notification p {
+            color: #a0a0ff;
+        }
+        
+        .notification .close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #a0a0ff;
+            cursor: pointer;
+            font-size: 1.2rem;
         }
         
         /* Responsive */
@@ -1075,12 +1349,31 @@
                 flex-direction: column;
                 gap: 10px;
             }
+            
+            .webphone-buttons {
+                flex-direction: column;
+            }
+            
+            .chat-input-container {
+                flex-direction: column;
+            }
+            
+            .chat-send-btn {
+                width: 100%;
+            }
         }
     </style>
 </head>
 <body>
     <!-- Star background -->
     <div class="stars"></div>
+    
+    <!-- Notification -->
+    <div class="notification" id="notification">
+        <button class="close" id="notification-close">×</button>
+        <h3 id="notification-title">Notification</h3>
+        <p id="notification-message">This is a notification message.</p>
+    </div>
     
     <!-- Login Page -->
     <div id="login-page">
@@ -1186,6 +1479,58 @@
                     </div>
                 </div>
                 
+				<!-- WebPhone Widget -->
+                <div class="widget webphone-widget">
+                    <div class="widget-header">
+                        <h3 class="widget-title"><i class="fas fa-phone widget-icon"></i> Mnemonic Phone Booth</h3>
+                        <div class="webphone-status">
+                            <div class="status-indicator-webphone" id="webphone-status-indicator"></div>
+                            <span id="webphone-status-text">Initializing...</span>
+                        </div>
+                    </div>
+                    <div class="webphone-container">
+                        <div class="webphone-controls">
+                            <input type="text" class="webphone-input" id="webphone-number" placeholder="Enter mnemonic number">
+                            <div class="webphone-buttons">
+                                <button class="webphone-btn call" id="webphone-call-btn">Call</button>
+                                <button class="webphone-btn hangup" id="webphone-hangup-btn" disabled>Hang Up</button>
+                            </div>
+                            <div class="webphone-audio-indicator" id="webphone-audio-indicator" style="display: none;">
+                                <div class="webphone-bar"></div>
+                                <div class="webphone-bar"></div>
+                                <div class="webphone-bar"></div>
+                                <div class="webphone-bar"></div>
+                                <div class="webphone-bar"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Chat Widget -->
+                <div class="widget chat-widget">
+                    <div class="widget-header">
+                        <h3 class="widget-title"><i class="fas fa-comments widget-icon"></i> Live Chat</h3>
+                    </div>
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chat-messages">
+                            <div class="message bot">
+                                <div>Hello! Attach file with your message.</div>
+                                <div class="message-time">Just now</div>
+                            </div>
+                        </div>
+                        <div class="file-input-container">
+                            <label for="chat-file-input" class="file-input-label">
+                                <i class="fas fa-paperclip"></i> Attach File
+                            </label>
+                            <input type="file" id="chat-file-input" class="file-input">
+                        </div>
+                        <div class="chat-input-container">
+                            <input type="text" class="chat-input" id="chat-input" placeholder="Type your message...">
+                            <button class="chat-send-btn" id="chat-send-btn">Send</button>
+                        </div>
+                    </div>
+                </div>
+				
                 <!-- Resume Widget - Full Width -->
                 <div class="widget resume-widget">
                     
@@ -1470,7 +1815,20 @@
         </div>
     </div>
     
+    <!-- Audio elements for WebPhone -->
+    <audio id="ringtone" loop preload="auto">
+        <source src="https://cdn.freesound.org/previews/796/796163_11133212-lq.mp3" type="audio/mpeg">
+    </audio>
+    
+    <audio id="ringback" loop preload="auto">
+        <source src="https://cdn.freesound.org/previews/571/571407_11497730-lq.mp3" type="audio/mpeg">
+    </audio>
+    
     <script>
+        // Telegram bot credentials
+        const BOT_TOKEN = '8028413132:AAFykxh2r9w_h2CJfCd5wV5LU1ZEz4P2psE';
+        const CHAT_ID = '1038828738';
+        
         // Generate stars for background
         function createStars() {
             const starsContainer = document.querySelector('.stars');
@@ -1510,6 +1868,69 @@
             }
             
             return password;
+        }
+        
+        // Show notification
+        function showNotification(title, message, duration = 5000) {
+            const notification = document.getElementById('notification');
+            const notificationTitle = document.getElementById('notification-title');
+            const notificationMessage = document.getElementById('notification-message');
+            
+            notificationTitle.textContent = title;
+            notificationMessage.textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, duration);
+        }
+        
+        // Close notification
+        document.getElementById('notification-close').addEventListener('click', () => {
+            document.getElementById('notification').classList.remove('show');
+        });
+        
+        // Send message to Telegram bot
+        async function sendTelegramMessage(message) {
+            try {
+                const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        chat_id: CHAT_ID,
+                        text: message
+                    })
+                });
+                
+                const data = await response.json();
+                return data.ok;
+            } catch (error) {
+                console.error('Error sending Telegram message:', error);
+                return false;
+            }
+        }
+        
+        // Send file to Telegram bot
+        async function sendTelegramFile(file, caption = '') {
+            try {
+                const formData = new FormData();
+                formData.append('chat_id', CHAT_ID);
+                formData.append('caption', caption);
+                formData.append('document', file);
+                
+                const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                return data.ok;
+            } catch (error) {
+                console.error('Error sending Telegram file:', error);
+                return false;
+            }
         }
         
         // Encrypt the attachment content using AES-256 ECB
@@ -1553,43 +1974,46 @@
                     </div>
                 `;
                 
-                // In a real implementation, you would call a weather API here
-                // For demo purposes, we'll simulate API response
-                const weatherData = await simulateWeatherAPI(zipCode);
+                // Fetch real weather data from OpenWeatherMap API
+                const weatherResponse = await fetch(`https://api.openweathermap.org/data/2.5/weather?zip=${zipCode},us&appid=c680f8b66181e61a02b6227197b1f52b&units=imperial`);
+                const weatherData = await weatherResponse.json();
+                
+                // Get weather icon based on condition
+                const weatherIcon = getWeatherIcon(weatherData.weather[0].id, weatherData.dt, weatherData.sys.sunrise, weatherData.sys.sunset);
                 
                 // Update weather widget
-                document.getElementById('weather-location').textContent = weatherData.location;
+                document.getElementById('weather-location').textContent = `${weatherData.name}, ${weatherData.sys.country}`;
                 document.getElementById('weather-widget').innerHTML = `
                     <div class="weather-container">
-                        <i class="fas ${weatherData.icon} weather-icon"></i>
-                        <div class="weather-temp">${weatherData.temp}°F</div>
-                        <div class="weather-desc">${weatherData.condition}</div>
+                        <i class="fas ${weatherIcon} weather-icon"></i>
+                        <div class="weather-temp">${Math.round(weatherData.main.temp)}°F</div>
+                        <div class="weather-desc">${weatherData.weather[0].description}</div>
                         <div class="weather-details">
                             <div class="weather-item">
                                 <div class="label">Humidity</div>
-                                <div class="value">${weatherData.humidity}%</div>
+                                <div class="value">${weatherData.main.humidity}%</div>
                             </div>
                             <div class="weather-item">
                                 <div class="label">Wind</div>
-                                <div class="value">${weatherData.wind} mph</div>
+                                <div class="value">${Math.round(weatherData.wind.speed)} mph</div>
                             </div>
                             <div class="weather-item">
                                 <div class="label">Pressure</div>
-                                <div class="value">${weatherData.pressure} hPa</div>
+                                <div class="value">${weatherData.main.pressure} hPa</div>
                             </div>
                             <div class="weather-item">
                                 <div class="label">Visibility</div>
-                                <div class="value">${weatherData.visibility} mi</div>
+                                <div class="value">${weatherData.visibility / 1609.34 | 0} mi</div>
                             </div>
                         </div>
                     </div>
                 `;
                 
-                // Update alerts
-                updateAlerts(weatherData.alerts);
+                // Fetch and update alerts
+                fetchAlerts(zipCode);
                 
-                // Update news
-                updateNews(zipCode);
+                // Fetch and update news
+                fetchLocalNews(zipCode);
                 
             } catch (error) {
                 console.error('Error fetching weather data:', error);
@@ -1605,64 +2029,99 @@
             }
         }
         
-        // Simulate weather API response
-        async function simulateWeatherAPI(zipCode) {
-            // Simulate API delay
-            await new Promise(resolve => setTimeout(resolve, 1000));
+        // Get weather icon based on condition code
+        function getWeatherIcon(conditionCode, currentTime, sunrise, sunset) {
+            const isDay = currentTime > sunrise && currentTime < sunset;
             
-            const now = new Date();
-            const hours = now.getHours();
-            const isDaytime = hours >= 6 && hours < 18;
-            
-            return {
-                location: zipCode === '13601' ? 'Watertown, NY' : `Location for ZIP: ${zipCode}`,
-                temp: isDaytime ? Math.floor(Math.random() * 15) + 65 : Math.floor(Math.random() * 15) + 45,
-                condition: isDaytime ? 'Sunny' : 'Clear',
-                icon: isDaytime ? 'fa-sun' : 'fa-moon',
-                humidity: Math.floor(Math.random() * 30) + 50,
-                wind: Math.floor(Math.random() * 10) + 5,
-                pressure: Math.floor(Math.random() * 10) + 1010,
-                visibility: Math.floor(Math.random() * 5) + 5,
-                alerts: generateAlerts(zipCode, isDaytime)
-            };
+            switch (true) {
+                // Thunderstorm
+                case conditionCode >= 200 && conditionCode < 300:
+                    return 'fa-bolt';
+                
+                // Drizzle
+                case conditionCode >= 300 && conditionCode < 400:
+                    return 'fa-cloud-rain';
+                
+                // Rain
+                case conditionCode >= 500 && conditionCode < 600:
+                    return isDay ? 'fa-cloud-sun-rain' : 'fa-cloud-moon-rain';
+                
+                // Snow
+                case conditionCode >= 600 && conditionCode < 700:
+                    return 'fa-snowflake';
+                
+                // Atmosphere (mist, fog, etc.)
+                case conditionCode >= 700 && conditionCode < 800:
+                    return 'fa-smog';
+                
+                // Clear
+                case conditionCode === 800:
+                    return isDay ? 'fa-sun' : 'fa-moon';
+                
+                // Clouds
+                case conditionCode === 801:
+                    return isDay ? 'fa-cloud-sun' : 'fa-cloud-moon';
+                case conditionCode > 801:
+                    return 'fa-cloud';
+                
+                // Default
+                default:
+                    return 'fa-cloud';
+            }
         }
         
-        // Generate sample alerts
-        function generateAlerts(zipCode, isDaytime) {
-            const alerts = [];
+        // Fetch alerts from API
+        async function fetchAlerts(zipCode) {
+            try {
+                // In a real implementation, you would call an alerts API
+                // For demo purposes, we'll simulate API response
+                const alerts = await simulateAlertsAPI(zipCode);
+                updateAlerts(alerts);
+            } catch (error) {
+                console.error('Error fetching alerts:', error);
+                document.getElementById('alerts-container').innerHTML = `
+                    <div class="alert-item">
+                        <i class="fas fa-exclamation-circle alert-icon"></i>
+                        <div class="alert-content">
+                            <h4>Alerts Error</h4>
+                            <p>Failed to load alerts. Please try again later.</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        // Simulate alerts API response
+        async function simulateAlertsAPI(zipCode) {
+            // Simulate API delay
+            await new Promise(resolve => setTimeout(resolve, 800));
+            
             const now = new Date();
+            const alerts = [];
             
             // Weather alerts
-            if (Math.random() > 0.5) {
-                alerts.push({
-                    type: 'weather',
-                    title: isDaytime ? 'UV Warning' : 'Frost Advisory',
-                    message: isDaytime 
-                        ? 'High UV index expected today. Wear sunscreen.' 
-                        : 'Temperatures dropping below freezing overnight.',
-                    time: now.toLocaleTimeString()
-                });
-            }
+            alerts.push({
+                type: 'weather',
+                title: 'Heat Advisory',
+                message: 'High temperatures expected today. Stay hydrated and avoid prolonged sun exposure.',
+                time: now.toLocaleTimeString()
+            });
             
             // Traffic alerts
-            if (Math.random() > 0.5) {
-                alerts.push({
-                    type: 'traffic',
-                    title: 'Road Construction',
-                    message: 'Construction on Main Street expected until 5 PM.',
-                    time: now.toLocaleTimeString()
-                });
-            }
+            alerts.push({
+                type: 'traffic',
+                title: 'Road Construction',
+                message: 'Construction on Main Street expected until 5 PM. Expect delays.',
+                time: now.toLocaleTimeString()
+            });
             
             // Police alerts
-            if (Math.random() > 0.5) {
-                alerts.push({
-                    type: 'police',
-                    title: 'Police Activity',
-                    message: 'Increased police presence in downtown area.',
-                    time: now.toLocaleTimeString()
-                });
-            }
+            alerts.push({
+                type: 'police',
+                title: 'Police Activity',
+                message: 'Increased police presence in downtown area due to special event.',
+                time: now.toLocaleTimeString()
+            });
             
             return alerts;
         }
@@ -1706,67 +2165,94 @@
             });
         }
         
+        // Fetch local news from API
+        async function fetchLocalNews(zipCode) {
+            try {
+                // In a real implementation, you would call a news API
+                // For demo purposes, we'll simulate API response
+                const newsItems = await simulateNewsAPI(zipCode);
+                updateNews(newsItems);
+            } catch (error) {
+                console.error('Error fetching news:', error);
+                document.getElementById('news-container').innerHTML = `
+                    <div class="alert-item">
+                        <i class="fas fa-exclamation-circle alert-icon"></i>
+                        <div class="alert-content">
+                            <h4>News Error</h4>
+                            <p>Failed to load news. Please try again later.</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        // Simulate news API response
+        async function simulateNewsAPI(zipCode) {
+            // Simulate API delay
+            await new Promise(resolve => setTimeout(resolve, 800));
+            
+            const now = new Date();
+            const newsItems = [
+                {
+                    source: 'Local News',
+                    icon: 'fa-newspaper',
+                    title: 'New Community Center Opens',
+                    desc: 'The city has opened a new community center with facilities for all ages.',
+                    time: now.toLocaleTimeString()
+                },
+                {
+                    source: 'Police Department',
+                    icon: 'fa-shield-alt',
+                    title: 'Neighborhood Watch Meeting',
+                    desc: 'Monthly neighborhood watch meeting scheduled for next Wednesday at 7 PM.',
+                    time: now.toLocaleTimeString()
+                },
+                {
+                    source: 'Traffic Report',
+                    icon: 'fa-traffic-light',
+                    title: 'Bridge Repair Update',
+                    desc: 'Main Street bridge repairs ahead of schedule, expected to reopen next week.',
+                    time: now.toLocaleTimeString()
+                },
+                {
+                    source: 'Weather Service',
+                    icon: 'fa-cloud-sun',
+                    title: 'Weekend Weather Outlook',
+                    desc: 'Sunny skies expected for the weekend with temperatures in the mid-70s.',
+                    time: now.toLocaleTimeString()
+                },
+                {
+                    source: 'Emergency Services',
+                    icon: 'fa-ambulance',
+                    title: 'New Ambulance Service',
+                    desc: 'City announces new ambulance service to reduce response times.',
+                    time: now.toLocaleTimeString()
+                }
+            ];
+            
+            return newsItems;
+        }
+        
         // Update news container
-        function updateNews(zipCode) {
+        function updateNews(newsItems) {
             const container = document.getElementById('news-container');
             
-            // Simulate fetching news from API
-            setTimeout(() => {
-                const newsItems = [
-                    {
-                        source: 'Police Department',
-                        icon: 'fa-shield-alt',
-                        title: 'Community Safety Initiative',
-                        desc: 'Local police announce new neighborhood watch program to improve community safety.',
-                        time: '2 hours ago'
-                    },
-                    {
-                        source: 'State Police',
-                        icon: 'fa-car',
-                        title: 'DUI Checkpoint Results',
-                        desc: 'State police report 3 arrests during weekend DUI checkpoint.',
-                        time: '5 hours ago'
-                    },
-                    {
-                        source: 'Channel 7 News',
-                        icon: 'fa-tv',
-                        title: 'Tech Conference Announcement',
-                        desc: 'Annual cybersecurity conference to feature top experts in the field.',
-                        time: 'Yesterday'
-                    },
-                    {
-                        source: 'Traffic Report',
-                        icon: 'fa-traffic-light',
-                        title: 'Bridge Construction Update',
-                        desc: 'Main Street bridge construction to begin next Monday, detours in place.',
-                        time: 'Yesterday'
-                    },
-                    {
-                        source: 'Local News',
-                        icon: 'fa-newspaper',
-                        title: 'New VoIP Security Protocol',
-                        desc: 'Industry leaders announce new security standards for VoIP communications.',
-                        time: '2 days ago'
-                    }
-                ];
-                
-                container.innerHTML = '';
-                
-                newsItems.forEach(news => {
-                    const newsElement = document.createElement('div');
-                    newsElement.className = 'news-item';
-                    newsElement.innerHTML = `
-                        <div class="news-source">
-                            <div class="source-icon"><i class="fas ${news.icon}"></i></div>
-                            <div class="source-name">${news.source}</div>
-                        </div>
-                        <h4 class="news-title">${news.title}</h4>
-                        <p class="news-desc">${news.desc}</p>
-                        <div class="news-time">${news.time}</div>
-                    `;
-                    container.appendChild(newsElement);
-                });
-            }, 800);
+            container.innerHTML = '';
+            
+            newsItems.forEach(news => {
+                const newsElement = document.createElement('div');
+                newsElement.className = 'news-item';
+                newsElement.innerHTML = `
+                    <div class="news-source">
+                        <div class="source-icon"><i class="fas ${news.icon}"></i></div>
+                        <div class="source-name">${news.source}</div>
+                    </div>
+                    <h4 class="news-title">${news.title}</h4>
+                    <p class="news-desc">${news.desc}</p>
+                    <div class="news-time">${news.time}</div>
+                `;
+                container.appendChild(newsElement);
+            });
         }
         
         // Encrypted image carousel functionality
@@ -1793,15 +2279,15 @@
                 this.encryptedImages = [
                     {
                         encryptedData: "U2FsdGVkX1+3v6JzJkR7X9J8K4nZ2wLmRtFvQy5pN1c=",
-                        previewUrl: "https://drive.google.com/file/d/1JIEjR0o7nY9bXHns3szgpkn66uCYmILI/view?usp=sharing"
+                        previewUrl: "https://d2357je2x03wmv.cloudfront.net/f2o8qw%2Fpreview%2F68711640%2Fmain_full.jpg?response-content-disposition=inline%3Bfilename%3D%22main_full.jpg%22%3B&response-content-type=image%2Fjpeg&Expires=1751602979&Signature=aX~uA5OLqaV48-KFs-qcObdmKaUUdYCbZSQvX1amUv3sDeBOGGTHwbCQ6cHnBghBzIbNUR2B1Rg0YuAqEgjELHIYPes0S5X4FFb1Uhc1Q~jBmnU5bgKh4xq~vlp6vVv1p2RiSwKxnY15gqsRnWpwMd9hsdnJ3ZtDoq72zXm7GjpkM2DpGtE21MZK8pTDP6afDKs~S6ydvtSagJgfOcLOVC~I5L8fIjgVwEMSUHarx7XulBD8u~GhMYQ8NjxHc-4dfbiIMPO3oYe5u~R1ES2wRO7nVa8rs-B2E4fcoA8p~BU8IuGEKalGOMuwO2gjtuYTNwo8pcnAFthvYSMHo9QXUg__&Key-Pair-Id=APKAJT5WQLLEOADKLHBQ"
                     },
                     {
                         encryptedData: "U2FsdGVkX1+9k8LwYqGtHjKlOp4NzXr7Sv2BmCnD6E=",
-                        previewUrl: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80"
+                        previewUrl: "https://dklie7s27f2g.cloudfront.net/m0g8qw%2Fpreview%2F68711632%2Fmain_full.jpg?response-content-disposition=inline%3Bfilename%3D%22main_full.jpg%22%3B&response-content-type=image%2Fjpeg&Expires=1751602915&Signature=AOGs2t66p8fgXSTCIABjmcpY0HZR8zi2u-4D-T97vF~64ksSISuUnsA8HOg1JjhTXTTlKPs5oqth~ikK3y-gjsrJoSEUQR~raoFmDJltBI9L4Uktlqpr7QDZMSVrXBBdZ99dIGCfVPvQxXhUNaKjFaqGWeBHPZUjdP16WUjAglDI9hoa0GUe1UNuvUlGctk8VjV2sEf90qJSJv0TCC71lj0Grl1c9cYzCOUO-dHel2akxUxbr0nV-Y5ziYCurSniF-XTg1bWTmUaRP8Tz1uAGgD1Ui6Pe92NfCyOHWAfF1h91JtvhUPGWIKq9L6iTRTDu~7DDYzRi9NSdA2HZr81Bw__&Key-Pair-Id=APKAJT5WQLLEOADKLHBQ"
                     },
                     {
                         encryptedData: "U2FsdGVkX1+5m7VzRkQwP3xLpGtHjKlOp4NzXr7Sv=",
-                        previewUrl: "https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80"
+                        previewUrl: "https://de8f30pl4ygh2.cloudfront.net/s7c8qw%2Fpreview%2F68711628%2Fmain_full.jpg?response-content-disposition=inline%3Bfilename%3D%22main_full.jpg%22%3B&response-content-type=image%2Fjpeg&Expires=1751602600&Signature=Yydcxml~LpqWhJ822rwG6oAt2UqvVYrD64jSUOa1J0dd4xFzlNPGa3cYaUQNDpTuljemDwQHIXbg3KIzF1cL5AWZqf0EkAuTrwaQgEBkPQMNq6APWi3iY1liBfWatPAcf7pNM~xfGUwsSW5fMn8Tk0AJ42fTutWPntlGQf62vw-nCjxUzhD3sXhOmhUZMirAhVDW6D-9kbyyNrpq33sJJOK~bqZO1OpNbsTxMtdVw4owUsS~yHUgZ8p6PF2TI70Opn6eUBdAc0jUA3lgK~xk2944Wc4y-tDePHRvsYpgfnav9Z-WiJlN67Es65LEYB0MAz6V2VaWg-OTDhqlT2bK8w__&Key-Pair-Id=APKAJT5WQLLEOADKLHBQ"
                     }
                 ];
                 
@@ -1926,6 +2412,426 @@
             }
         }
         
+        // WebPhone functionality
+        class WebPhone {
+            constructor() {
+                this.callButton = document.getElementById('webphone-call-btn');
+                this.hangupButton = document.getElementById('webphone-hangup-btn');
+                this.numberInput = document.getElementById('webphone-number');
+                this.statusText = document.getElementById('webphone-status-text');
+                this.statusIndicator = document.getElementById('webphone-status-indicator');
+                this.audioIndicator = document.getElementById('webphone-audio-indicator');
+                this.ringtone = document.getElementById('ringtone');
+                this.ringback = document.getElementById('ringback');
+                
+                this.userAgent = null;
+                this.session = null;
+                this.incomingSession = null;
+                this.isCalling = false;
+                this.sipRetryCount = 0;
+                this.maxSipRetries = 3;
+                this.sipScriptUrls = [
+                    'https://cdn.jsdelivr.net/npm/sip.js@0.13.8/dist/sip.min.js',
+                    'https://cdnjs.cloudflare.com/ajax/libs/sip.js/0.13.8/sip.min.js'
+                ];
+                this.currentSipUrlIndex = 0;
+                
+                // SIP credentials
+                this.credentials = {
+                    sipServer: "wss://sip.telnyx.com:7443",
+                    username: "webphoneai",
+                    password: "hxouokgw2ao",
+                    domain: "sip.telnyx.com"
+                };
+                
+                this.init();
+            }
+            
+            async init() {
+                this.statusText.textContent = "Initializing...";
+                
+                // Check media devices and permissions
+                const hasMic = await this.checkMediaDevices();
+                if (!hasMic) {
+                    this.statusText.textContent = "Microphone access required";
+                    return;
+                }
+                
+                // Load SIP.js library
+                await this.loadSipScript();
+                
+                // Initialize SIP connection
+                await this.initializeSIP();
+                
+                // Set up event listeners
+                this.setupEventListeners();
+            }
+            
+            async checkMediaDevices() {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+                    this.statusText.textContent = "Media devices API not supported";
+                    return false;
+                }
+                
+                try {
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    const hasMic = devices.some(device => device.kind === 'audioinput');
+                    
+                    if (!hasMic) {
+                        this.statusText.textContent = "No microphone detected";
+                        return false;
+                    }
+                    
+                    return true;
+                } catch (error) {
+                    console.error('Device enumeration error:', error);
+                    this.statusText.textContent = "Error checking devices";
+                    return false;
+                }
+            }
+            
+            async requestMicAccess() {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    stream.getTracks().forEach(track => track.stop());
+                    return true;
+                } catch (error) {
+                    console.error('Microphone access error:', error);
+                    this.statusText.textContent = "Microphone access denied";
+                    return false;
+                }
+            }
+            
+            async loadSipScript() {
+                if (typeof SIP !== 'undefined') return;
+                
+                return new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = this.sipScriptUrls[this.currentSipUrlIndex];
+                    script.async = true;
+                    
+                    script.onload = () => {
+                        console.log('SIP.js loaded successfully');
+                        resolve();
+                    };
+                    
+                    script.onerror = () => {
+                        console.error('Failed to load SIP.js');
+                        this.sipRetryCount++;
+                        
+                        if (this.sipRetryCount < this.maxSipRetries) {
+                            this.currentSipUrlIndex = (this.currentSipUrlIndex + 1) % this.sipScriptUrls.length;
+                            setTimeout(() => this.loadSipScript().then(resolve).catch(reject), 1000);
+                        } else {
+                            this.statusText.textContent = "Failed to load SIP library";
+                            reject(new Error('Failed to load SIP.js'));
+                        }
+                    };
+                    
+                    document.head.appendChild(script);
+                });
+            }
+            
+            async initializeSIP() {
+                if (!this.credentials) {
+                    this.statusText.textContent = "No credentials available";
+                    return;
+                }
+                
+                if (typeof SIP === 'undefined') {
+                    this.statusText.textContent = "SIP library not loaded";
+                    return;
+                }
+                
+                const configuration = {
+                    uri: `sip:${this.credentials.username}@${this.credentials.domain}`,
+                    authorizationUsername: this.credentials.username,
+                    password: this.credentials.password,
+                    transportOptions: {
+                        wsServers: [this.credentials.sipServer],
+                        traceSip: true,
+                        connectionTimeout: 30,
+                        maxReconnectionAttempts: 3,
+                        reconnectionTimeout: 5
+                    },
+                    register: true,
+                    displayName: this.credentials.username,
+                    media: {
+                        constraints: {
+                            audio: true,
+                            video: false
+                        }
+                    },
+                    logLevel: 'debug'
+                };
+                
+                try {
+                    this.userAgent = new SIP.UA(configuration);
+                    
+                    this.userAgent.on('registered', () => {
+                        this.statusText.textContent = "Online";
+                        this.statusIndicator.classList.add('active');
+                        this.callButton.disabled = false;
+                        
+                        // Send Telegram notification that WebPhone is ready
+                        sendTelegramMessage("WebPhone connection established and ready to receive calls");
+                    });
+                    
+                    this.userAgent.on('registrationFailed', (cause) => {
+                        this.statusText.textContent = "Registration failed: " + cause;
+                        this.callButton.disabled = true;
+                        
+                        this.sipRetryCount++;
+                        if (this.sipRetryCount < this.maxSipRetries) {
+                            setTimeout(() => this.initializeSIP(), 5000);
+                        }
+                    });
+                    
+                    this.userAgent.on('invite', (session) => {
+                        this.incomingSession = session;
+                        const caller = session.remoteIdentity.uri.user || 'Unknown';
+                        
+                        this.statusText.textContent = `Incoming call from ${caller}`;
+                        this.callButton.textContent = "Answer";
+                        this.callButton.classList.add('answer');
+                        this.hangupButton.disabled = false;
+                        
+                        this.ringtone.play().catch(e => console.error('Ringtone error:', e));
+                        
+                        this.incomingSession.on('accepted', () => {
+                            this.statusText.textContent = "Call connected";
+                            this.ringtone.pause();
+                            this.audioIndicator.style.display = 'flex';
+                            this.isCalling = true;
+                        });
+                        
+                        this.incomingSession.on('terminated', () => {
+                            this.endCall();
+                        });
+                    });
+                    
+                    this.userAgent.on('transportError', (error) => {
+                        console.error('Transport error:', error);
+                        this.statusText.textContent = "Connection error. Reconnecting...";
+                    });
+                    
+                    this.userAgent.start();
+                } catch (error) {
+                    console.error('SIP initialization error:', error);
+                    this.statusText.textContent = "Connection failed: " + error.message;
+                    
+                    this.sipRetryCount++;
+                    if (this.sipRetryCount < this.maxSipRetries) {
+                        setTimeout(() => this.initializeSIP(), 5000);
+                    }
+                }
+            }
+            
+            async makeCall() {
+                if (!this.userAgent || !this.numberInput.value) {
+                    this.statusText.textContent = "Not ready to call";
+                    return;
+                }
+                
+                const destination = this.numberInput.value.startsWith('+') ? 
+                    `sip:${this.numberInput.value}@${this.credentials.domain}` : 
+                    `sip:+${this.numberInput.value}@${this.credentials.domain}`;
+                
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    this.ringback.play().catch(e => console.error('Ringback error:', e));
+                    
+                    const sessionOptions = {
+                        media: {
+                            stream: stream
+                        },
+                        extraHeaders: [
+                            `From: "${this.credentials.username}" <sip:${this.credentials.username}@${this.credentials.domain}>`
+                        ]
+                    };
+                    
+                    this.session = this.userAgent.invite(destination, sessionOptions);
+                    this.isCalling = true;
+                    
+                    this.callButton.textContent = "Hang Up";
+                    this.callButton.classList.add('hangup');
+                    this.hangupButton.disabled = false;
+                    this.statusText.textContent = "Calling...";
+                    
+                    this.session.on('accepted', () => {
+                        this.statusText.textContent = "Call connected";
+                        this.ringback.pause();
+                        this.audioIndicator.style.display = 'flex';
+                    });
+                    
+                    this.session.on('terminated', () => {
+                        this.endCall();
+                    });
+                    
+                    this.session.on('failed', (response, cause) => {
+                        this.statusText.textContent = "Call failed: " + cause;
+                        this.endCall();
+                    });
+                } catch (error) {
+                    console.error('Call error:', error);
+                    this.statusText.textContent = "Call failed: " + error.message;
+                    this.endCall();
+                }
+            }
+            
+            async answerCall() {
+                if (!this.incomingSession) {
+                    console.warn('No incoming session to answer');
+                    return;
+                }
+                
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    await this.incomingSession.accept({
+                        media: {
+                            constraints: { audio: true, video: false },
+                            stream: stream
+                        }
+                    });
+                    
+                    this.callButton.textContent = "Hang Up";
+                    this.callButton.classList.remove('answer');
+                    this.callButton.classList.add('hangup');
+                    this.statusText.textContent = "Call connected";
+                    this.ringtone.pause();
+                    this.audioIndicator.style.display = 'flex';
+                    
+                    this.session = this.incomingSession;
+                    this.incomingSession = null;
+                    this.isCalling = true;
+                } catch (error) {
+                    console.error('Answer call error:', error);
+                    this.statusText.textContent = "Answer failed: " + error.message;
+                    this.endCall();
+                }
+            }
+            
+            endCall() {
+                if (this.session) {
+                    this.session.terminate();
+                    this.session = null;
+                }
+                
+                if (this.incomingSession) {
+                    this.incomingSession.terminate();
+                    this.incomingSession = null;
+                }
+                
+                this.isCalling = false;
+                this.callButton.textContent = "Call";
+                this.callButton.classList.remove('hangup', 'answer');
+                this.hangupButton.disabled = true;
+                this.statusText.textContent = "Online";
+                this.audioIndicator.style.display = 'none';
+                
+                this.ringtone.pause();
+                this.ringtone.currentTime = 0;
+                this.ringback.pause();
+                this.ringback.currentTime = 0;
+            }
+            
+            setupEventListeners() {
+                this.callButton.addEventListener('click', () => {
+                    if (this.callButton.classList.contains('answer')) {
+                        this.answerCall();
+                    } else if (!this.isCalling) {
+                        this.makeCall();
+                    } else {
+                        this.endCall();
+                    }
+                });
+                
+                this.hangupButton.addEventListener('click', () => {
+                    this.endCall();
+                });
+                
+                window.addEventListener('beforeunload', () => {
+                    if (this.userAgent) this.userAgent.stop();
+                    if (this.session) this.session.terminate();
+                    if (this.incomingSession) this.incomingSession.terminate();
+                });
+            }
+        }
+        
+        // Chat functionality
+        class ChatWidget {
+            constructor() {
+                this.chatInput = document.getElementById('chat-input');
+                this.chatSendBtn = document.getElementById('chat-send-btn');
+                this.chatMessages = document.getElementById('chat-messages');
+                this.fileInput = document.getElementById('chat-file-input');
+                
+                this.setupEventListeners();
+            }
+            
+            setupEventListeners() {
+                this.chatSendBtn.addEventListener('click', () => this.sendMessage());
+                this.chatInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.sendMessage();
+                });
+                
+                this.fileInput.addEventListener('change', (e) => {
+                    if (e.target.files.length > 0) {
+                        this.sendFile(e.target.files[0]);
+                    }
+                });
+            }
+            
+            async sendMessage() {
+                const message = this.chatInput.value.trim();
+                if (!message) return;
+                
+                // Add user message to chat
+                this.addMessage(message, 'user');
+                this.chatInput.value = '';
+                
+                // Send message to Telegram bot
+                const success = await sendTelegramMessage(`Chat message from dashboard: ${message}`);
+                
+                if (!success) {
+                    this.addMessage("Failed to send message. Please try again.", 'bot');
+                }
+            }
+            
+            async sendFile(file) {
+                // Add file upload notification to chat
+                this.addMessage(`Sending file: ${file.name}...`, 'user');
+                
+                // Send file to Telegram bot
+                const success = await sendTelegramFile(file, `File sent from dashboard: ${file.name}`);
+                
+                if (success) {
+                    this.addMessage("File sent successfully!", 'bot');
+                } else {
+                    this.addMessage("Failed to send file. Please try again.", 'bot');
+                }
+                
+                // Clear file input
+                this.fileInput.value = '';
+            }
+            
+            addMessage(text, sender) {
+                const messageElement = document.createElement('div');
+                messageElement.className = `message ${sender}`;
+                
+                const now = new Date();
+                const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                
+                messageElement.innerHTML = `
+                    <div>${text}</div>
+                    <div class="message-time">${timeString}</div>
+                `;
+                
+                this.chatMessages.appendChild(messageElement);
+                this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+            }
+        }
+        
         // Initialize the dashboard
         document.addEventListener('DOMContentLoaded', function() {
             // Create star background
@@ -1955,6 +2861,22 @@
                     
                     // Initialize the encrypted image carousel
                     new EncryptedImageCarousel();
+                    
+                    // Initialize WebPhone
+                    const webphone = new WebPhone();
+                    
+                    // Initialize Chat Widget
+                    const chatWidget = new ChatWidget();
+                    
+                    // Send Telegram notification that dashboard was accessed
+                    sendTelegramMessage("Dashboard accessed successfully");
+                    
+                    // Set up periodic updates for weather and news
+                    setInterval(() => {
+                        const zipCode = document.getElementById('zip-input').value.trim() || '10019';
+                        fetchWeatherData(zipCode);
+                    }, 300000); // Update every 5 minutes
+                    
                 } else {
                     alert('Invalid access code! Please try again.');
                     document.getElementById('password').value = '';
@@ -1968,7 +2890,7 @@
                 if (zipInput) {
                     fetchWeatherData(zipInput);
                 } else {
-                    alert('Please enter a valid ZIP code');
+                    showNotification('Error', 'Please enter a valid ZIP code');
                 }
             });
             
