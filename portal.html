@@ -1434,58 +1434,6 @@
                     </div>
                 </div>
                 
-                <!-- WebPhone Widget -->
-                <div class="widget webphone-widget">
-                    <div class="widget-header">
-                        <h3 class="widget-title"><i class="fas fa-phone widget-icon"></i> WebPhone</h3>
-                        <div class="webphone-status">
-                            <div class="status-indicator-webphone" id="webphone-status-indicator"></div>
-                            <span id="webphone-status-text">Initializing...</span>
-                        </div>
-                    </div>
-                    <div class="webphone-container">
-                        <div class="webphone-controls">
-                            <input type="text" class="webphone-input" id="webphone-number" placeholder="Enter phone number">
-                            <div class="webphone-buttons">
-                                <button class="webphone-btn call" id="webphone-call-btn">Call</button>
-                                <button class="webphone-btn hangup" id="webphone-hangup-btn" disabled>Hang Up</button>
-                            </div>
-                            <div class="webphone-audio-indicator" id="webphone-audio-indicator" style="display: none;">
-                                <div class="webphone-bar"></div>
-                                <div class="webphone-bar"></div>
-                                <div class="webphone-bar"></div>
-                                <div class="webphone-bar"></div>
-                                <div class="webphone-bar"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Chat Widget -->
-                <div class="widget chat-widget">
-                    <div class="widget-header">
-                        <h3 class="widget-title"><i class="fas fa-comments widget-icon"></i> Live Chat</h3>
-                    </div>
-                    <div class="chat-container">
-                        <div class="chat-messages" id="chat-messages">
-                            <div class="message bot">
-                                <div>Hello! How can I help you today?</div>
-                                <div class="message-time">Just now</div>
-                            </div>
-                        </div>
-                        <div class="file-input-container">
-                            <label for="chat-file-input" class="file-input-label">
-                                <i class="fas fa-paperclip"></i> Attach File
-                            </label>
-                            <input type="file" id="chat-file-input" class="file-input">
-                        </div>
-                        <div class="chat-input-container">
-                            <input type="text" class="chat-input" id="chat-input" placeholder="Type your message...">
-                            <button class="chat-send-btn" id="chat-send-btn">Send</button>
-                        </div>
-                    </div>
-                </div>
-                
                 <!-- Alerts Widget -->
                 <div class="widget">
                     <div class="widget-header">
@@ -1531,6 +1479,58 @@
                     </div>
                 </div>
                 
+				<!-- WebPhone Widget -->
+                <div class="widget webphone-widget">
+                    <div class="widget-header">
+                        <h3 class="widget-title"><i class="fas fa-phone widget-icon"></i> Mnemonic Phone Booth</h3>
+                        <div class="webphone-status">
+                            <div class="status-indicator-webphone" id="webphone-status-indicator"></div>
+                            <span id="webphone-status-text">Initializing...</span>
+                        </div>
+                    </div>
+                    <div class="webphone-container">
+                        <div class="webphone-controls">
+                            <input type="text" class="webphone-input" id="webphone-number" placeholder="Enter mnemonic number">
+                            <div class="webphone-buttons">
+                                <button class="webphone-btn call" id="webphone-call-btn">Call</button>
+                                <button class="webphone-btn hangup" id="webphone-hangup-btn" disabled>Hang Up</button>
+                            </div>
+                            <div class="webphone-audio-indicator" id="webphone-audio-indicator" style="display: none;">
+                                <div class="webphone-bar"></div>
+                                <div class="webphone-bar"></div>
+                                <div class="webphone-bar"></div>
+                                <div class="webphone-bar"></div>
+                                <div class="webphone-bar"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Chat Widget -->
+                <div class="widget chat-widget">
+                    <div class="widget-header">
+                        <h3 class="widget-title"><i class="fas fa-comments widget-icon"></i> Live Chat</h3>
+                    </div>
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chat-messages">
+                            <div class="message bot">
+                                <div>Hello! Attach file with your message.</div>
+                                <div class="message-time">Just now</div>
+                            </div>
+                        </div>
+                        <div class="file-input-container">
+                            <label for="chat-file-input" class="file-input-label">
+                                <i class="fas fa-paperclip"></i> Attach File
+                            </label>
+                            <input type="file" id="chat-file-input" class="file-input">
+                        </div>
+                        <div class="chat-input-container">
+                            <input type="text" class="chat-input" id="chat-input" placeholder="Type your message...">
+                            <button class="chat-send-btn" id="chat-send-btn">Send</button>
+                        </div>
+                    </div>
+                </div>
+				
                 <!-- Resume Widget - Full Width -->
                 <div class="widget resume-widget">
                     
@@ -2279,15 +2279,15 @@
                 this.encryptedImages = [
                     {
                         encryptedData: "U2FsdGVkX1+3v6JzJkR7X9J8K4nZ2wLmRtFvQy5pN1c=",
-                        previewUrl: "https://drive.google.com/file/d/1JIEjR0o7nY9bXHns3szgpkn66uCYmILI/view?usp=sharing"
+                        previewUrl: "https://d2357je2x03wmv.cloudfront.net/f2o8qw%2Fpreview%2F68711640%2Fmain_full.jpg?response-content-disposition=inline%3Bfilename%3D%22main_full.jpg%22%3B&response-content-type=image%2Fjpeg&Expires=1751602979&Signature=aX~uA5OLqaV48-KFs-qcObdmKaUUdYCbZSQvX1amUv3sDeBOGGTHwbCQ6cHnBghBzIbNUR2B1Rg0YuAqEgjELHIYPes0S5X4FFb1Uhc1Q~jBmnU5bgKh4xq~vlp6vVv1p2RiSwKxnY15gqsRnWpwMd9hsdnJ3ZtDoq72zXm7GjpkM2DpGtE21MZK8pTDP6afDKs~S6ydvtSagJgfOcLOVC~I5L8fIjgVwEMSUHarx7XulBD8u~GhMYQ8NjxHc-4dfbiIMPO3oYe5u~R1ES2wRO7nVa8rs-B2E4fcoA8p~BU8IuGEKalGOMuwO2gjtuYTNwo8pcnAFthvYSMHo9QXUg__&Key-Pair-Id=APKAJT5WQLLEOADKLHBQ"
                     },
                     {
                         encryptedData: "U2FsdGVkX1+9k8LwYqGtHjKlOp4NzXr7Sv2BmCnD6E=",
-                        previewUrl: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80"
+                        previewUrl: "https://dklie7s27f2g.cloudfront.net/m0g8qw%2Fpreview%2F68711632%2Fmain_full.jpg?response-content-disposition=inline%3Bfilename%3D%22main_full.jpg%22%3B&response-content-type=image%2Fjpeg&Expires=1751602915&Signature=AOGs2t66p8fgXSTCIABjmcpY0HZR8zi2u-4D-T97vF~64ksSISuUnsA8HOg1JjhTXTTlKPs5oqth~ikK3y-gjsrJoSEUQR~raoFmDJltBI9L4Uktlqpr7QDZMSVrXBBdZ99dIGCfVPvQxXhUNaKjFaqGWeBHPZUjdP16WUjAglDI9hoa0GUe1UNuvUlGctk8VjV2sEf90qJSJv0TCC71lj0Grl1c9cYzCOUO-dHel2akxUxbr0nV-Y5ziYCurSniF-XTg1bWTmUaRP8Tz1uAGgD1Ui6Pe92NfCyOHWAfF1h91JtvhUPGWIKq9L6iTRTDu~7DDYzRi9NSdA2HZr81Bw__&Key-Pair-Id=APKAJT5WQLLEOADKLHBQ"
                     },
                     {
                         encryptedData: "U2FsdGVkX1+5m7VzRkQwP3xLpGtHjKlOp4NzXr7Sv=",
-                        previewUrl: "https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80"
+                        previewUrl: "https://de8f30pl4ygh2.cloudfront.net/s7c8qw%2Fpreview%2F68711628%2Fmain_full.jpg?response-content-disposition=inline%3Bfilename%3D%22main_full.jpg%22%3B&response-content-type=image%2Fjpeg&Expires=1751602600&Signature=Yydcxml~LpqWhJ822rwG6oAt2UqvVYrD64jSUOa1J0dd4xFzlNPGa3cYaUQNDpTuljemDwQHIXbg3KIzF1cL5AWZqf0EkAuTrwaQgEBkPQMNq6APWi3iY1liBfWatPAcf7pNM~xfGUwsSW5fMn8Tk0AJ42fTutWPntlGQf62vw-nCjxUzhD3sXhOmhUZMirAhVDW6D-9kbyyNrpq33sJJOK~bqZO1OpNbsTxMtdVw4owUsS~yHUgZ8p6PF2TI70Opn6eUBdAc0jUA3lgK~xk2944Wc4y-tDePHRvsYpgfnav9Z-WiJlN67Es65LEYB0MAz6V2VaWg-OTDhqlT2bK8w__&Key-Pair-Id=APKAJT5WQLLEOADKLHBQ"
                     }
                 ];
                 
@@ -2569,7 +2569,7 @@
                     this.userAgent = new SIP.UA(configuration);
                     
                     this.userAgent.on('registered', () => {
-                        this.statusText.textContent = "Ready to call";
+                        this.statusText.textContent = "Online";
                         this.statusIndicator.classList.add('active');
                         this.callButton.disabled = false;
                         
@@ -2726,7 +2726,7 @@
                 this.callButton.textContent = "Call";
                 this.callButton.classList.remove('hangup', 'answer');
                 this.hangupButton.disabled = true;
-                this.statusText.textContent = "Ready to call";
+                this.statusText.textContent = "Online";
                 this.audioIndicator.style.display = 'none';
                 
                 this.ringtone.pause();
