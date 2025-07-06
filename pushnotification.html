@@ -4,51 +4,112 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Push Notification Example</title>
+    <style>
+        /* Fallback in-page notification style */
+        .fallback-notification {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #333;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+        }
+    </style>
 </head>
 <body>
     <h1>Push Notification on Page Load</h1>
-    <p>Open this page to see a push notification (if permissions are granted).</p>
+    <p>A notification should appear if your browser and device support it.</p>
+    <div id="fallbackNotification" class="fallback-notification">
+        Killian Daisreaux Goffman | 216-KILLIAN
+    </div>
 
     <script>
-        // Function to request notification permission and show notification
+        // Function to show fallback in-page notification
+        function showFallbackNotification() {
+            const fallback = document.getElementById('fallbackNotification');
+            fallback.style.display = 'block';
+            setTimeout(() => {
+                fallback.style.display = 'none';
+            }, 5000); // Hide after 5 seconds
+        }
+
+        // Function to check support and show push notification
         async function showPushNotification() {
-            // Check if the browser supports notifications and service workers
+            // Check if browser supports notifications and service workers
             if (!('Notification' in window) || !('serviceWorker' in navigator)) {
-                console.log('This browser does not support notifications or service workers.');
+                console.log('Notifications or Service Workers not supported.');
+                showFallbackNotification();
                 return;
             }
 
-            // Request permission for notifications
-            const permission = await Notification.requestPermission();
-            if (permission !== 'granted') {
-                console.log('Notification permission denied.');
-                return;
-            }
-
-            // Register the Service Worker
             try {
+                // Register Service Worker
                 const registration = await navigator.serviceWorker.register('service-worker.js');
                 console.log('Service Worker registered:', registration);
 
-                // Show the notification
-                await registration.showNotification('Killian Daisreaux Goffman | 216-KILLIAN', {
-                    body: 'Notification triggered on page load!',
-                    icon: 'https://via.placeholder.com/64', // Optional: Add an icon URL
-                    badge: 'https://via.placeholder.com/32', // Optional: Badge for notification
-                    vibrate: [200, 100, 200], // Vibration pattern (if supported)
-                    tag: 'welcome-notification', // Prevents duplicate notifications
-                    renotify: true // Re-notifies if tag is reused
-                });
-                console.log('Notification displayed.');
+                // Check notification permission
+                if (Notification.permission === 'granted') {
+                    // Show notification directly
+                    await registration.showNotification('Killian Daisreaux Goffman | 216-KILLIAN', {
+                        body: 'Notification triggered on page load!',
+                        icon: 'https://via.placeholder.com/64', // Optional icon
+                        badge: 'https://via.placeholder.com/32', // Optional badge
+                        vibrate: [200, 100, 200], // Vibration pattern
+                        tag: 'welcome-notification', // Prevent duplicates
+                        renotify: true // Re-notify if tag reused
+                    });
+                } else if (Notification.permission !== 'denied') {
+                    // Request permission
+                    const permission = await Notification.requestPermission();
+                    if (permission === 'granted') {
+                        await registration.showNotification('Killian Daisreaux Goffman | 216-KILLIAN', {
+                            body: 'Notification triggered on page load!',
+                            icon: 'https://via.placeholder.com/64',
+                            badge: 'https://via.placeholder.com/32',
+                            vibrate: [200, 100, 200],
+                            tag: 'welcome-notification',
+                            renotify: true
+                        });
+                    } else {
+                        console.log('Notification permission denied.');
+                        showFallbackNotification();
+                    }
+                } else {
+                    console.log('Notification permission previously denied.');
+                    showFallbackNotification();
+                }
             } catch (error) {
                 console.error('Error with Service Worker or notification:', error);
+                showFallbackNotification();
             }
         }
 
-        // Run the notification function when the page loads
+        // Run on page load
         window.addEventListener('load', () => {
             showPushNotification();
         });
+
+        // Detect iOS Safari < 16.4 or other unsupported environments
+        function isUnsupportedBrowser() {
+            const ua = navigator.userAgent;
+            const isSafari = ua.includes('Safari') && !ua.includes('Chrome');
+            const isIOS = /iPad|iPhone|iPod/.test(ua);
+            const safariVersion = ua.match(/Version\/(\d+\.\d+)/);
+            if (isSafari && isIOS && safariVersion && parseFloat(safariVersion[1]) < 16.4) {
+                return true;
+            }
+            return false;
+        }
+
+        // Check for unsupported browsers and show fallback immediately
+        if (isUnsupportedBrowser()) {
+            console.log('Unsupported browser (e.g., iOS Safari < 16.4). Using fallback.');
+            showFallbackNotification();
+        }
     </script>
 </body>
 </html>
