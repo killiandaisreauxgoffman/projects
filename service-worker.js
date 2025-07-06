@@ -10,7 +10,7 @@ self.addEventListener('push', (event) => {
     };
 
     event.waitUntil(
-        self.registration.showNotification('Killian Daisreaux Dedaisreaux Goffman | 216-KILLIAN', options)
+        self.registration.showNotification('Killian Daisreaux Goffman | 216-KILLIAN', options)
     );
 });
 
