@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Futuristic Gold Business Card</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 10% 20%, rgba(255, 200, 124, 0.15) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(46, 196, 182, 0.15) 0%, transparent 20%),
+                radial-gradient(circle at 50% 50%, rgba(103, 58, 183, 0.2) 0%, transparent 30%);
+            z-index: -1;
+        }
+
+        .container {
+            perspective: 1500px;
+            width: 100%;
+            max-width: 420px;
+            height: 580px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            box-shadow: 0 15px 45px rgba(255, 215, 0, 0.3);
+            border-radius: 20px;
+        }
+
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 20px;
+            overflow: hidden;
+            background: rgba(35, 35, 45, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            padding: 35px;
+        }
+
+        .card-front {
+            justify-content: space-between;
+        }
+
+        .card-back {
+            transform: rotateY(180deg);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+
+        .card-header {
+            position: relative;
+            text-align: center;
+            padding-bottom: 30px;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .card-header::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 25%;
+            width: 50%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #FFD700, #FFA500, transparent);
+            border-radius: 50%;
+        }
+
+        .profile-img {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            border: 4px solid rgba(255, 215, 0, 0.5);
+            object-fit: cover;
+            margin: 0 auto 25px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.4);
+        }
+
+        .profile-img::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(transparent, rgba(255, 215, 0, 0.7), transparent 30%);
+            animation: rotate 4s linear infinite;
+        }
+
+        .profile-img img {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .name {
+            font-size: 32px;
+            font-weight: 700;
+            color: #FFFFFF;
+            margin-bottom: 8px;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+        }
+
+        .title {
+            font-size: 19px;
+            color: #FFEA8A;
+            margin-bottom: 25px;
+            letter-spacing: 1px;
+        }
+
+        .contact-info {
+            margin-top: 25px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 18px;
+            padding: 12px 18px;
+            background: rgba(60, 60, 70, 0.4);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 215, 0, 0.15);
+        }
+
+        .info-item:hover {
+            background: rgba(255, 215, 0, 0.15);
+            transform: translateX(8px);
+            border-color: rgba(255, 215, 0, 0.3);
+        }
+
+        .info-item i {
+            font-size: 22px;
+            color: #FFD700;
+            margin-right: 18px;
+            width: 30px;
+            text-align: center;
+        }
+
+        .info-text {
+            color: #FFFFFF;
+            font-size: 17px;
+            letter-spacing: 0.5px;
+        }
+
+        .social-icons {
+            display: flex;
+            justify-content: center;
+            margin-top: 25px;
+            gap: 22px;
+        }
+
+        .social-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(60, 60, 70, 0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #FFD700;
+            font-size: 22px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            border: 1px solid rgba(255, 215, 0, 0.15);
+        }
+
+        .social-icon:hover {
+            background: rgba(255, 215, 0, 0.2);
+            color: #FFF;
+            transform: translateY(-5px) scale(1.1);
+            box-shadow: 0 5px 20px rgba(255, 215, 0, 0.3);
+            border-color: rgba(255, 215, 0, 0.4);
+        }
+
+        .flip-note {
+            text-align: center;
+            margin-top: 25px;
+            color: rgba(255, 230, 150, 0.8);
+            font-size: 15px;
+            animation: pulse 2s infinite;
+        }
+
+        /* Card Back Styles */
+        .qr-container {
+            width: 220px;
+            height: 220px;
+            background: white;
+            padding: 12px;
+            border-radius: 12px;
+            box-shadow: 0 10px 35px rgba(255, 215, 0, 0.3);
+            margin-bottom: 35px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .qr-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(transparent, #FFD700, #FFA500, transparent 70%);
+            animation: rotate 4s linear infinite;
+            z-index: 0;
+        }
+
+        #qrcode {
+            position: relative;
+            z-index: 1;
+            background: white;
+            padding: 7px;
+            border-radius: 8px;
+        }
+
+        .website-link {
+            color: #FFFFFF;
+            font-size: 20px;
+            margin-top: 25px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: block;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .website-link:hover {
+            color: #FFD700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .scan-text {
+            color: #FFD700;
+            font-size: 22px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        /* Animated Border */
+        .animated-border {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 20px;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .animated-border::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(transparent, rgba(255, 215, 0, 0.7), #FFA500, rgba(255, 195, 0, 0.7), transparent);
+            animation: rotate 6s linear infinite;
+        }
+
+        .animated-border::after {
+            content: '';
+            position: absolute;
+            inset: 3px;
+            background: rgba(35, 35, 45, 0.85);
+            border-radius: 18px;
+        }
+
+        /* Floating Particles */
+        .particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(103, 58, 183, 0.4);
+            animation: float 15s infinite linear;
+        }
+
+        .gold-particle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 215, 0, 0.4);
+            animation: float 12s infinite linear;
+        }
+
+        /* Animations */
+        @keyframes rotate {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 0.7;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0) translateX(0) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.5;
+            }
+            90% {
+                opacity: 0.6;
+            }
+            100% {
+                transform: translateY(-1000px) translateX(1000px) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 480px) {
+            .container {
+                height: 520px;
+                max-width: 350px;
+            }
+            
+            .card-face {
+                padding: 25px;
+            }
+            
+            .profile-img {
+                width: 110px;
+                height: 110px;
+            }
+            
+            .name {
+                font-size: 26px;
+            }
+            
+            .title {
+                font-size: 16px;
+            }
+            
+            .info-text {
+                font-size: 15px;
+            }
+        }
+
+        /* Header Styling */
+        .header {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            z-index: 5;
+        }
+
+        .header h1 {
+            color: #FFFFFF;
+            font-size: 36px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.7);
+        }
+
+        .header p {
+            color: #FFEA8A;
+            font-size: 18px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Footer Styling */
+        .footer {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            z-index: 5;
+        }
+
+        .footer a {
+            color: #FFD700;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Futuristic Business Card</h1>
+        <p>Interactive digital card with dynamic QR code and modern design</p>
+    </div>
+    
+    <div class="container">
+        <div class="card" id="card">
+            <div class="animated-border"></div>
+            <div class="card-face card-front">
+                <div class="card-header">
+                    <div class="profile-img">
+                        <img src="https://images.unsplash.com/photo-1534030347209-467a5b0ad3e6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1887&q=80" alt="Profile">
+                    </div>
+                    <h1 class="name">ALEX RIVERS</h1>
+                    <p class="title">SENIOR UI/UX DESIGNER</p>
+                </div>
+                
+                <div class="contact-info">
+                    <div class="info-item">
+                        <i class="fas fa-envelope"></i>
+                        <div class="info-text">alex.rivers@futuredesign.io</div>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-phone"></i>
+                        <div class="info-text">+1 (555) 123-4567</div>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div class="info-text">San Francisco, CA</div>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="social-icons">
+                        <a href="#" class="social-icon"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-dribbble"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-behance"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-twitter"></i></a>
+                    </div>
+                    <p class="flip-note">Click card to flip</p>
+                </div>
+            </div>
+            
+            <div class="card-face card-back">
+                <h2 class="scan-text">SCAN TO CONNECT</h2>
+                <div class="qr-container">
+                    <div id="qrcode"></div>
+                </div>
+                <a href="https://futuredesign.io" class="website-link">www.futuredesign.io</a>
+                <p style="color: rgba(255, 230, 150, 0.8); text-align: center; margin-top: 30px; font-size: 15px;">
+                    "Designing the future, one pixel at a time"
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="particles" id="particles"></div>
+    <div class="particles" id="gold-particles"></div>
+    
+    <div class="footer">
+        <p>Futuristic Business Card Design | Made with <i class="fas fa-heart" style="color: #ff3366;"></i> | <a href="#">View Source Code</a></p>
+    </div>
+    
+    <script>
+        // Create floating particles
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            const goldParticlesContainer = document.getElementById('gold-particles');
+            const particleCount = 25;
+            
+            for (let i = 0; i < particleCount; i++) {
+                // Blue/purple particles
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                
+                const size = Math.random() * 8 + 2;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.left = `${Math.random() * 100}%`;
+                particle.style.top = `${Math.random() * 100}%`;
+                particle.style.animationDuration = `${Math.random() * 20 + 10}s`;
+                particle.style.animationDelay = `${Math.random() * 5}s`;
+                particle.style.opacity = Math.random() * 0.5 + 0.2;
+                
+                particlesContainer.appendChild(particle);
+                
+                // Gold particles
+                const goldParticle = document.createElement('div');
+                goldParticle.classList.add('gold-particle');
+                
+                const goldSize = Math.random() * 10 + 3;
+                goldParticle.style.width = `${goldSize}px`;
+                goldParticle.style.height = `${goldSize}px`;
+                goldParticle.style.left = `${Math.random() * 100}%`;
+                goldParticle.style.top = `${Math.random() * 100}%`;
+                goldParticle.style.animationDuration = `${Math.random() * 15 + 8}s`;
+                goldParticle.style.animationDelay = `${Math.random() * 3}s`;
+                goldParticle.style.opacity = Math.random() * 0.6 + 0.3;
+                
+                goldParticlesContainer.appendChild(goldParticle);
+            }
+        }
+        
+        // Generate QR Code
+        function generateQRCode() {
+            // Using the current page URL for the QR code
+            const currentUrl = window.location.href;
+            new QRCode(document.getElementById("qrcode"), {
+                text: currentUrl,
+                width: 196,
+                height: 196,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
+        
+        // Flip card on click
+        document.getElementById('card').addEventListener('click', function() {
+            this.classList.toggle('flipped');
+        });
+        
+        // Initialize
+        window.onload = function() {
+            createParticles();
+            generateQRCode();
+        };
+    </script>
+</body>
+</html>
