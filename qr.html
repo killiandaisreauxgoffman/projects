@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Futuristic QR Code Widget with Unique 3D Effects</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      font-family: 'Arial Black', Arial, sans-serif;
+      perspective: 1200px;
+      overflow: hidden;
+    }
+
+    .qr-widget {
+      position: relative;
+      background: rgba(0, 0, 0, 0.7);
+      border: 2px solid #00ffcc;
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 0 20px rgba(0, 255, 204, 0.5), inset 0 0 10px rgba(0, 255, 204, 0.3);
+      width: 300px;
+      height: 300px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: transform 0.3s ease;
+    }
+
+    .qr-widget:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 30px rgba(0, 255, 204, 0.7);
+    }
+
+    .qr-container {
+      display: grid;
+      grid-gap: 1px;
+      background-color: transparent;
+      position: relative;
+      transform-style: preserve-3d;
+    }
+
+    .qr-module {
+      width: 12px;
+      height: 12px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 10px;
+      font-weight: bold;
+      transition: transform 1s ease, opacity 1s ease, text-shadow 0.5s ease;
+    }
+
+    .black {
+      color: #00ffcc;
+      text-shadow: 0 0 5px #00ffcc, 0 0 10px #00ffcc;
+    }
+
+    .white {
+      color: #e0e0e0;
+      text-shadow: 0 0 3px #e0e0e0;
+    }
+
+    /* Keyframes for different effects */
+    @keyframes zoom {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(var(--scale)); }
+    }
+
+    @keyframes fade {
+      0%, 100% { opacity: 1; }
+      50% { opacity: var(--opacity); }
+    }
+
+    @keyframes flipX {
+      0%, 100% { transform: rotateX(0); }
+      50% { transform: rotateX(var(--angle)); }
+    }
+
+    @keyframes flipY {
+      0%, 100% { transform: rotateY(0); }
+      50% { transform: rotateY(var(--angle)); }
+    }
+
+    @keyframes fly {
+      0% { transform: translate(0, 0, 0); }
+      100% { transform: translate(var(--tx), var(--ty), var(--tz)); }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translate(0, 0); }
+      25% { transform: translate(var(--shakeX), var(--shakeY)); }
+      50% { transform: translate(calc(-1 * var(--shakeX)), calc(-1 * var(--shakeY))); }
+      75% { transform: translate(var(--shakeX), var(--shakeY)); }
+    }
+
+    @keyframes sizeChange {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(var(--scale)); }
+    }
+
+    .particle {
+      position: absolute;
+      background: rgba(0, 255, 204, 0.3);
+      border-radius: 50%;
+      pointer-events: none;
+      animation: float 5s infinite;
+    }
+
+    @keyframes float {
+      0% { transform: translateY(0); opacity: 0.5; }
+      50% { opacity: 0.2; }
+      100% { transform: translateY(-100px); opacity: 0; }
+    }
+
+    .widget-title {
+      position: absolute;
+      top: -30px;
+      left: 10px;
+      color: #00ffcc;
+      font-size: 14px;
+      text-transform: uppercase;
+      text-shadow: 0 0 10px #00ffcc;
+    }
+
+    .widget-status {
+      position: absolute;
+      bottom: -25px;
+      right: 10px;
+      color: #00ffcc;
+      font-size: 12px;
+      text-shadow: 0 0 5px #00ffcc;
+    }
+  </style>
+</head>
+<body>
+  <div class="qr-widget">
+    <span class="widget-title">QR Link</span>
+    <div class="qr-container" id="qrContainer"></div>
+    <span class="widget-status" id="widgetStatus">Scattering...</span>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script>
+    // Generate QR code matrix for https://Daisreaux.com
+    const url = "https://Daisreaux.com";
+    const qr = new QRCode(document.createElement("div"), {
+      text: url,
+      width: 128,
+      height: 128,
+      colorDark: "#000000",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.L
+    });
+
+    // Extract QR code matrix
+    const qrMatrix = qr._oDrawing._eCanvas.getContext("2d")
+      .getImageData(0, 0, qr._htOption.width, qr._htOption.height)
+      .data;
+
+    const size = qr._htOption.width;
+    const moduleSize = 12;
+    const modules = Math.sqrt(qrMatrix.length / 4);
+    const matrix = [];
+
+    // Convert canvas data to binary matrix
+    for (let y = 0; y < modules; y++) {
+      const row = [];
+      for (let x = 0; x < modules; x++) {
+        const index = (y * modules + x) * 4;
+        const isBlack = qrMatrix[index] === 0;
+        row.push(isBlack ? 1 : 0);
+      }
+      matrix.push(row);
+    }
+
+    // Set grid template
+    const container = document.getElementById("qrContainer");
+    container.style.gridTemplateColumns = `repeat(${modules}, ${moduleSize}px)`;
+
+    // Generate QR code modules
+    matrix.forEach((row, rowIndex) => {
+      row.forEach((cell, colIndex) => {
+        const module = document.createElement("div");
+        module.classList.add("qr-module");
+        module.classList.add(cell === 1 ? "black" : "white");
+        module.textContent = cell === 1 ? "-" : "•";
+        module.dataset.row = rowIndex;
+        module.dataset.col = colIndex;
+        container.appendChild(module);
+      });
+    });
+
+    // Particle effects
+    function createParticles() {
+      for (let i = 0; i < 20; i++) {
+        const particle = document.createElement("div");
+        particle.classList.add("particle");
+        particle.style.width = `${Math.random() * 5 + 2}px`;
+        particle.style.height = particle.style.width;
+        particle.style.left = `${Math.random() * 300}px`;
+        particle.style.top = `${Math.random() * 300}px`;
+        particle.style.animationDelay = `${Math.random() * 5}s`;
+        document.querySelector(".qr-widget").appendChild(particle);
+      }
+    }
+    createParticles();
+
+    // Define effects
+    const effects = [
+      {
+        name: "zoom",
+        apply: module => {
+          const scale = 1 + Math.random() * 1.5;
+          module.style.setProperty("--scale", scale);
+          module.style.animation = `zoom ${2 + Math.random() * 3}s infinite`;
+        }
+      },
+      {
+        name: "fade",
+        apply: module => {
+          const opacity = Math.random() * 0.5;
+          module.style.setProperty("--opacity", opacity);
+          module.style.animation = `fade ${1.5 + Math.random() * 2}s infinite`;
+        }
+      },
+      {
+        name: "flipX",
+        apply: module => {
+          const angle = 180 + Math.random() * 180;
+          module.style.setProperty("--angle", `${angle}deg`);
+          module.style.animation = `flipX ${2 + Math.random() * 3}s infinite`;
+        }
+      },
+      {
+        name: "flipY",
+        apply: module => {
+          const angle = 180 + Math.random() * 180;
+          module.style.setProperty("--angle", `${angle}deg`);
+          module.style.animation = `flipY ${2 + Math.random() * 3}s infinite`;
+        }
+      },
+      {
+        name: "fly",
+        apply: module => {
+          const tx = (Math.random() - 0.5) * 150;
+          const ty = (Math.random() - 0.5) * 150;
+          const tz = (Math.random() - 0.5) * 80;
+          module.style.setProperty("--tx", `${tx}px`);
+          module.style.setProperty("--ty", `${ty}px`);
+          module.style.setProperty("--tz", `${tz}px`);
+          module.style.animation = `fly ${2 + Math.random() * 3}s infinite alternate`;
+        }
+      },
+      {
+        name: "shake",
+        apply: module => {
+          const shakeX = (Math.random() - 0.5) * 10;
+          const shakeY = (Math.random() - 0.5) * 10;
+          module.style.setProperty("--shakeX", `${shakeX}px`);
+          module.style.setProperty("--shakeY", `${shakeY}px`);
+          module.style.animation = `shake ${0.5 + Math.random() * 1}s infinite`;
+        }
+      },
+      {
+        name: "sizeChange",
+        apply: module => {
+          const scale = 0.5 + Math.random() * 1.5;
+          module.style.setProperty("--scale", scale);
+          module.style.animation = `sizeChange ${2 + Math.random() * 3}s infinite`;
+        }
+      }
+    ];
+
+    function scatterModules() {
+      const modules = document.querySelectorAll(".qr-module");
+      modules.forEach(module => {
+        // Randomly select an effect
+        const effect = effects[Math.floor(Math.random() * effects.length)];
+        effect.apply(module);
+        module.style.opacity = 0.3 + Math.random() * 0.4;
+        module.style.textShadow = `0 0 ${10 + Math.random() * 10}px #00ffcc`;
+      });
+      document.getElementById("widgetStatus").textContent = "Scattering...";
+    }
+
+    function assembleModules() {
+      const modules = document.querySelectorAll(".qr-module");
+      modules.forEach(module => {
+        module.style.animation = "none";
+        module.style.transform = "translate(0, 0) translateZ(0) rotateX(0) rotateY(0) scale(1)";
+        module.style.opacity = 1;
+        module.style.textShadow = module.classList.contains("black")
+          ? "0 0 5px #00ffcc, 0 0 10px #00ffcc"
+          : "0 0 3px #e0e0e0";
+      });
+      document.getElementById("widgetStatus").textContent = "Scannable";
+    }
+
+    function animateQRCode() {
+      scatterModules();
+      setTimeout(() => {
+        assembleModules();
+        setTimeout(() => {
+          animateQRCode();
+        }, 5000);
+      }, 10000);
+    }
+
+    // Toggle animation on click
+    let isPaused = false;
+    document.querySelector(".qr-widget").addEventListener("click", () => {
+      if (!isPaused) {
+        document.querySelectorAll(".qr-module").forEach(module => {
+          module.style.animation = "none";
+          module.style.transform = "translate(0, 0) translateZ(0) rotateX(0) rotateY(0) scale(1)";
+          module.style.opacity = 1;
+          module.style.textShadow = module.classList.contains("black")
+            ? "0 0 5px #00ffcc, 0 0 10px #00ffcc"
+            : "0 0 3px #e0e0e0";
+        });
+        document.getElementById("widgetStatus").textContent = "Paused (Scannable)";
+        isPaused = true;
+      } else {
+        animateQRCode();
+        isPaused = false;
+      }
+    });
+
+    // Start animation
+    animateQRCode();
+  </script>
+</body>
+</html>
