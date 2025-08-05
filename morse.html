@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Futuristic Morse Code Learning</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(135deg, #0d1b2a, #1b263b);
+            color: #e0e1dd;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        h1 {
+            font-size: 2.5em;
+            text-align: center;
+            margin: 20px;
+            text-shadow: 0 0 10px #00ffcc;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        @keyframes glow {
+            from { text-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc; }
+            to { text-shadow: 0 0 20px #00ffcc, 0 0 30px #00ffcc; }
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+        }
+        .card {
+            background: #1b263b;
+            border: 2px solid #00ffcc;
+            border-radius: 15px;
+            padding: 20px;
+            width: 250px;
+            text-align: center;
+            transform: perspective(1000px) rotateY(0deg);
+            transition: transform 0.5s, box-shadow 0.5s;
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.5);
+        }
+        .card:hover {
+            transform: perspective(1000px) rotateY(10deg) translateY(-10px);
+            box-shadow: 0 0 30px rgba(0, 255, 204, 0.8);
+        }
+        .card h3 {
+            margin: 10px 0;
+            font-size: 1.5em;
+            color: #00ffcc;
+        }
+        .card p {
+            font-size: 1.2em;
+            margin: 10px 0;
+            color: #e0e1dd;
+        }
+        .card button, .exam-button, .decode-button {
+            background: #00ffcc;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            color: #0d1b2a;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .card button:hover, .exam-button:hover, .decode-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px #00ffcc;
+        }
+        .exam-panel {
+            position: fixed;
+            top: 0;
+            right: -500px;
+            width: 400px;
+            height: 100%;
+            background: #1b263b;
+            border-left: 2px solid #00ffcc;
+            box-shadow: -10px 0 20px rgba(0, 255, 204, 0.5);
+            padding: 20px;
+            transform: perspective(1000px) rotateY(-45deg);
+            transition: right 0.5s, transform 0.5s;
+            z-index: 1000;
+        }
+        .exam-panel.open {
+            right: 0;
+            transform: perspective(1000px) rotateY(0deg);
+        }
+        .exam-panel h2 {
+            color: #00ffcc;
+            text-align: center;
+        }
+        .exam-panel p {
+            font-size: 1.5em;
+            text-align: center;
+            margin: 20px 0;
+            color: #e0e1dd;
+        }
+        .exam-panel input {
+            padding: 10px;
+            width: 80%;
+            margin: 10px auto;
+            display: block;
+            background: #0d1b2a;
+            border: 2px solid #00ffcc;
+            color: #e0e1dd;
+            border-radius: 5px;
+        }
+        .exam-panel .result {
+            color: #00ffcc;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Futuristic Morse Code Learning</h1>
+    <button class="exam-button" onclick="toggleExam()">Open Exam</button>
+    <div class="container" id="lesson-container"></div>
+    <div class="exam-panel" id="exam-panel">
+        <h2>Morse Code Exam</h2>
+        <p id="morse-display">Click "Play Word" to start</p>
+        <button class="exam-button" onclick="playRandomWord()">Play Word</button>
+        <button class="exam-button" onclick="playCurrentWord()">Repeat Word</button>
+        <p>Enter Morse (e.g., .-):</p>
+        <input type="text" id="morse-input" placeholder="Enter Morse code">
+        <button class="decode-button" onclick="addDot()">DOT</button>
+        <button class="decode-button" onclick="addDash()">DASH</button>
+        <button class="decode-button" onclick="submitMorse()">Submit</button>
+        <p class="result" id="result"></p>
+    </div>
+
+    <script>
+        // Morse code dictionary
+        const morseCode = {
+            'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.',
+            'F': '..-.', 'G': '--.', 'H': '....', 'I': '..', 'J': '.---',
+            'K': '-.-', 'L': '.-..', 'M': '--', 'N': '-.', 'O': '---',
+            'P': '.--.', 'Q': '--.-', 'R': '.-.', 'S': '...', 'T': '-',
+            'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-', 'Y': '-.--',
+            'Z': '--..',
+            '0': '-----', '1': '.----', '2': '..---', '3': '...--', '4': '....-',
+            '5': '.....', '6': '-....', '7': '--...', '8': '---..', '9': '----.',
+            '.': '.-.-.-', ',': '--..--', '?': '..--..', '/': '-..-.', '@': '.--.-.'
+        };
+
+        // Lessons data
+        const lessons = [
+            { 
+                title: 'Lesson 1: Single Sounds', 
+                items: ['E', 'T'], 
+                desc: 'Learn E (.) and T (-)' 
+            },
+            { 
+                title: 'Lesson 2: Two Sounds', 
+                items: ['A', 'I', 'N', 'M'], 
+                desc: 'Learn A (.-), I (..), N (-.), M (--)' 
+            },
+            { 
+                title: 'Lesson 3: Opposites', 
+                items: ['K', 'Q', 'R', 'Y'], 
+                desc: 'Learn K (-.-), Q (--.-), R (.-.), Y (-.--)' 
+            },
+            { 
+                title: 'Lesson 4: Common Letters', 
+                items: ['S', 'O', 'H', 'L'], 
+                desc: 'Learn S (...), O (---), H (....), L (.-..)' 
+            },
+            { 
+                title: 'Lesson 5: More Letters', 
+                items: ['C', 'D', 'F', 'U', 'V'], 
+                desc: 'Learn C (-.-.), D (-..), F (..-.), U (..-), V (...-)' 
+            },
+            { 
+                title: 'Lesson 6: Remaining Letters', 
+                items: ['B', 'G', 'J', 'P', 'W', 'X', 'Z'], 
+                desc: 'Learn B (-...), G (--.), J (.---), P (.--.), W (.--), X (-..-), Z (--..)' 
+            },
+            { 
+                title: 'Lesson 7: Numbers', 
+                items: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'], 
+                desc: 'Learn numbers 0 (-----) to 9 (----.)' 
+            },
+            { 
+                title: 'Lesson 8: Punctuation', 
+                items: ['.', ',', '?', '/', '@'], 
+                desc: 'Learn period (.-.-.-), comma (--..--), question mark (..--..), slash (-..-.), at sign (.--.-.)' 
+            }
+        ];
+
+        // Audio context for sound generation
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Generate Morse sound
+        function playMorseSound(code) {
+            let time = audioCtx.currentTime;
+            const ditLength = 0.1; // 100ms for dit
+            const dahLength = ditLength * 3; // 300ms for dah
+            const gap = ditLength; // Gap between symbols
+
+            for (let symbol of code) {
+                const oscillator = audioCtx.createOscillator();
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(600, time); // 600 Hz tone
+                oscillator.connect(audioCtx.destination);
+                oscillator.start(time);
+                if (symbol === '.') {
+                    oscillator.stop(time + ditLength);
+                    time += ditLength + gap;
+                } else if (symbol === '-') {
+                    oscillator.stop(time + dahLength);
+                    time += dahLength + gap;
+                }
+            }
+        }
+
+        // Create lesson cards
+        const container = document.getElementById('lesson-container');
+        lessons.forEach((lesson, index) => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <h3>${lesson.title}</h3>
+                <p>${lesson.desc}</p>
+                ${lesson.items.map(item => `
+                    <p>${item}: ${morseCode[item]}</p>
+                    <button onclick="playMorseSound('${morseCode[item]}')">Play ${item}</button>
+                    <button onclick="playMorseSound('${morseCode[item]}')">Repeat ${item}</button>
+                `).join('')}
+            `;
+            container.appendChild(card);
+        });
+
+        // Exam panel functionality
+        let currentWord = '';
+        let currentMorse = '';
+
+        function toggleExam() {
+            const panel = document.getElementById('exam-panel');
+            panel.classList.toggle('open');
+        }
+
+        function generateRandomWord() {
+            const words = ['CAT', 'DOG', 'THE', 'AND', 'RUN', 'SUN', 'HAT', 'MAN', 'KEY', 'FOX'];
+            return words[Math.floor(Math.random() * words.length)];
+        }
+
+        function wordToMorse(word) {
+            return word.split('').map(letter => morseCode[letter.toUpperCase()]).join(' ');
+        }
+
+        function playWordMorse(word) {
+            let time = audioCtx.currentTime;
+            const gap = 0.3; // Gap between letters
+            for (let letter of word) {
+                const code = morseCode[letter.toUpperCase()];
+                playMorseSound(code);
+                time += (code.length * 0.1 + (code.length - 1) * 0.1 + gap);
+            }
+        }
+
+        function playRandomWord() {
+            currentWord = generateRandomWord();
+            currentMorse = wordToMorse(currentWord);
+            document.getElementById('morse-display').textContent = currentMorse;
+            playWordMorse(currentWord);
+        }
+
+        function playCurrentWord() {
+            if (currentWord) {
+                playWordMorse(currentWord);
+            }
+        }
+
+        let userMorse = '';
+        function addDot() {
+            userMorse += '.';
+            document.getElementById('morse-input').value = userMorse;
+        }
+
+        function addDash() {
+            userMorse += '-';
+            document.getElementById('morse-input').value = userMorse;
+        }
+
+        function submitMorse() {
+            const input = document.getElementById('morse-input').value;
+            const result = document.getElementById('result');
+            const item = Object.keys(morseCode).find(key => morseCode[key] === input);
+            if (item && currentWord.includes(item)) {
+                result.textContent = `Correct! Morse ${input} is ${item}`;
+                result.style.color = '#00ffcc';
+            } else {
+                result.textContent = `Incorrect. Try again!`;
+                result.style.color = '#ff4d4d';
+            }
+            userMorse = '';
+            document.getElementById('morse-input').value = '';
+        }
+    </script>
+</body>
+</html>
