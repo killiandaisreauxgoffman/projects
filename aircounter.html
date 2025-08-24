@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Stream Tracker</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #list { margin-top: 20px; }
+        .listener { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Stream Tracker for http://radio.clarkson.edu:8000/WTSCMed.m3u</h1>
+    <p>Total M3U opens: <span id="total"></span></p>
+    <p>Active users: <span id="active"></span></p>
+    <h2>Online Streams List</h2>
+    <div id="list"></div>
+
+    <script>
+        // Fetch data from PHP backend (assuming api.php returns JSON with total, active, listeners array)
+        fetch('api.php')  // Replace with your PHP endpoint URL
+            .then(response => response.json())
+            .catch(error => console.error('Error:', error))
+            .then(data => {
+                document.getElementById('total').textContent = data.total_opens;
+                document.getElementById('active').textContent = data.active_count;
+                const listDiv = document.getElementById('list');
+                data.listeners.forEach(listener => {
+                    const div = document.createElement('div');
+                    div.className = 'listener';
+                    div.innerHTML = `
+                        <p><strong>IP:</strong> ${listener.ip}</p>
+                        <p><strong>Location:</strong> ${listener.location}</p>
+                        <p><strong>ISP:</strong> ${listener.isp}</p>
+                        <p><strong>Browser/User-Agent:</strong> ${listener.user_agent}</p>
+                        <p><strong>Connected for:</strong> ${listener.connected_secs} seconds</p>
+                    `;
+                    listDiv.appendChild(div);
+                });
+            });
+
+        // For public active count only (if no backend, fallback)
+        // fetch('http://radio.clarkson.edu:8000/status.xml') // Parse XML for <listeners> under mount
+    </script>
+</body>
+</html>
