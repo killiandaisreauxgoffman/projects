@@ -6,6 +6,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- SIP.js Library for WebRTC Calling -->
+    <script src="https://cdn.jsdelivr.net/npm/sip.js@0.21.0/dist/sip.min.js"></script>
     <style>
         :root {
             --primary: #0c0e1b;
@@ -342,7 +344,7 @@
         
         .weather-details {
             display: grid;
-            grid-template-columns: repeat(2, 1fr));
+            grid-template-columns: repeat(2, 1fr);
             gap: 15px;
             width: 100%;
             margin-top: 15px;
@@ -957,7 +959,7 @@
             box-shadow: 0 5px 15px rgba(106, 76, 224, 0.4);
         }
         
-        /* WebPhone Widget */
+        /* WebPhone Widget - UPDATED STYLES */
         .webphone-widget {
             position: relative;
         }
@@ -987,11 +989,23 @@
             height: 12px;
             border-radius: 50%;
             background: #ff4d4d;
+            transition: all 0.3s;
         }
         
-        .status-indicator-webphone.active {
+        .status-indicator-webphone.connecting {
+            background: #ffaa00;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .status-indicator-webphone.registered {
             background: #00ff99;
             box-shadow: 0 0 10px #00ff99;
+        }
+        
+        .status-indicator-webphone.in-call {
+            background: #00ccff;
+            box-shadow: 0 0 15px #00ccff;
+            animation: pulse 0.8s infinite;
         }
         
         .webphone-controls {
@@ -1008,6 +1022,7 @@
             border-radius: 10px;
             color: var(--text);
             font-size: 1rem;
+            font-family: monospace;
         }
         
         .webphone-buttons {
@@ -1024,23 +1039,36 @@
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
         
         .webphone-btn.call {
             background: linear-gradient(45deg, #00cc66, #00aa55);
         }
         
+        .webphone-btn.answer {
+            background: linear-gradient(45deg, #00aaff, #0088cc);
+        }
+        
         .webphone-btn.hangup {
             background: linear-gradient(45deg, #ff3366, #cc0000);
         }
         
-        .webphone-btn:hover {
+        .webphone-btn:hover:not(:disabled) {
             transform: translateY(-3px);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
         
+        .webphone-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
         .webphone-audio-indicator {
-            display: flex;
+            display: none;
             justify-content: center;
             gap: 5px;
             margin-top: 15px;
@@ -1060,6 +1088,31 @@
         .webphone-bar:nth-child(3) { animation-delay: 0.4s; height: 25px; }
         .webphone-bar:nth-child(4) { animation-delay: 0.6s; height: 18px; }
         .webphone-bar:nth-child(5) { animation-delay: 0.8s; height: 10px; }
+        
+        .call-quality {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .call-quality.active {
+            display: flex;
+        }
+        
+        .quality-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #666;
+        }
+        
+        .quality-dot.good {
+            background: #00ff99;
+        }
         
         /* Chat Widget */
         .chat-widget {
@@ -1211,6 +1264,11 @@
         @keyframes audioBars {
             0%, 100% { transform: scaleY(0.5); }
             50% { transform: scaleY(1.5); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
         
         .cinematic {
@@ -1479,7 +1537,7 @@
                     </div>
                 </div>
                 
-                <!-- WebPhone Widget -->
+                <!-- WebPhone Widget - UPDATED -->
                 <div class="widget webphone-widget">
                     <div class="widget-header">
                         <h3 class="widget-title"><i class="fas fa-phone widget-icon"></i> Mnemonic Phone Booth</h3>
@@ -1490,12 +1548,20 @@
                     </div>
                     <div class="webphone-container">
                         <div class="webphone-controls">
-                            <input type="text" class="webphone-input" id="webphone-number" placeholder="Enter mnemonic number">
+                            <input type="text" class="webphone-input" id="webphone-number" placeholder="Enter phone number (e.g., +1234567890)">
                             <div class="webphone-buttons">
                                 <button class="webphone-btn call" id="webphone-call-btn">Call</button>
                                 <button class="webphone-btn hangup" id="webphone-hangup-btn" disabled>Hang Up</button>
                             </div>
-                            <div class="webphone-audio-indicator" id="webphone-audio-indicator" style="display: none;">
+                            <div class="call-quality" id="call-quality">
+                                <span>Call Quality:</span>
+                                <div class="quality-dot" id="quality-dot-1"></div>
+                                <div class="quality-dot" id="quality-dot-2"></div>
+                                <div class="quality-dot" id="quality-dot-3"></div>
+                                <div class="quality-dot" id="quality-dot-4"></div>
+                                <div class="quality-dot" id="quality-dot-5"></div>
+                            </div>
+                            <div class="webphone-audio-indicator" id="webphone-audio-indicator">
                                 <div class="webphone-bar"></div>
                                 <div class="webphone-bar"></div>
                                 <div class="webphone-bar"></div>
@@ -2504,7 +2570,7 @@
                     "5<n@wn+PrOk<",
                     "6vT%TnVA12[7",
                     "]ylcVXC=t4_p",
-                    "KillianDaisreauGoffman"
+                    "KillianDaisreauxGoffman"
                 ];
                 this.encryptedImages = [
                     {
@@ -2650,7 +2716,9 @@
             }
         }
         
-        // WebPhone functionality
+        // ==============================================
+        // FIXED WEBPHONE CLASS - WITH ALL FIXES APPLIED
+        // ==============================================
         class WebPhone {
             constructor() {
                 this.callButton = document.getElementById('webphone-call-btn');
@@ -2659,6 +2727,7 @@
                 this.statusText = document.getElementById('webphone-status-text');
                 this.statusIndicator = document.getElementById('webphone-status-indicator');
                 this.audioIndicator = document.getElementById('webphone-audio-indicator');
+                this.callQuality = document.getElementById('call-quality');
                 this.ringtone = document.getElementById('ringtone');
                 this.ringback = document.getElementById('ringback');
                 
@@ -2668,38 +2737,47 @@
                 this.isCalling = false;
                 this.sipRetryCount = 0;
                 this.maxSipRetries = 3;
-                this.sipScriptUrls = [
-                    'https://cdn.jsdelivr.net/npm/sip.js@0.13.8/dist/sip.min.js',
-                    'https://cdnjs.cloudflare.com/ajax/libs/sip.js/0.13.8/sip.min.js'
-                ];
-                this.currentSipUrlIndex = 0;
+                this.localStream = null;
+                this.remoteAudio = null;
+                this.mediaDevicesAvailable = false;
                 
-                // SIP credentials
+                // Updated SIP credentials
                 this.credentials = {
-                    sipServer: "wss://sip.telnyx.com:7443",
+                    sipServer: "wss://sip.telnyx.com",
                     username: "webphoneai",
                     password: "hxouokgw2ao",
-                    domain: "sip.telnyx.com"
+                    domain: "sip.telnyx.com",
+                    sipUri: "sip:webphoneai@sip.telnyx.com"
                 };
                 
+                // Create remote audio element for WebRTC audio
+                this.createRemoteAudioElement();
                 this.init();
             }
             
+            // Create hidden audio element for remote audio
+            createRemoteAudioElement() {
+                this.remoteAudio = document.createElement('audio');
+                this.remoteAudio.id = 'remote-audio';
+                this.remoteAudio.autoplay = true;
+                this.remoteAudio.controls = false;
+                this.remoteAudio.style.display = 'none';
+                document.body.appendChild(this.remoteAudio);
+            }
+            
             async init() {
-                this.statusText.textContent = "Initializing...";
+                this.updateStatus("Initializing...", "connecting");
                 
                 // Load Base64 ringtone
                 await this.loadBase64Ringtone();
                 
-                // Check media devices and permissions
-                const hasMic = await this.checkMediaDevices();
-                if (!hasMic) {
-                    this.statusText.textContent = "Microphone access required";
+                // Check and request microphone access
+                const micAccess = await this.checkAndRequestMicAccess();
+                if (!micAccess) {
+                    this.updateStatus("Microphone access required", "error");
+                    showNotification("Microphone Access", "Please allow microphone access to use the webphone");
                     return;
                 }
-                
-                // Load SIP.js library
-                await this.loadSipScript();
                 
                 // Initialize SIP connection
                 await this.initializeSIP();
@@ -2710,302 +2788,494 @@
             
             async loadBase64Ringtone() {
                 try {
-                    // Fetch the Base64 encoded ringtone from GitHub
                     const response = await fetch(RINGTONE_BASE64_URL);
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                     
                     const base64Data = await response.text();
-                    
-                    // Create a data URL from the Base64 string
                     const audioDataUrl = `data:audio/mp3;base64,${base64Data}`;
-                    
-                    // Set the ringtone source
                     this.ringtone.src = audioDataUrl;
-                    
-                    // Preload the ringtone
                     this.ringtone.load();
-                    
-                    console.log('Ringtone loaded successfully from Base64');
+                    console.log('Ringtone loaded successfully');
                 } catch (error) {
                     console.error('Error loading Base64 ringtone:', error);
-                    // Fallback to default ringtone if Base64 loading fails
+                    // Fallback
                     this.ringtone.src = 'https://github.com/killiandaisreauxgoffman/projects/raw/refs/heads/main/RingTone.mp3';
                     this.ringtone.load();
                 }
             }
             
-            async checkMediaDevices() {
-                if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
-                    this.statusText.textContent = "Media devices API not supported";
-                    return false;
-                }
-                
+            async checkAndRequestMicAccess() {
                 try {
-                    const devices = await navigator.mediaDevices.enumerateDevices();
-                    const hasMic = devices.some(device => device.kind === 'audioinput');
-                    
-                    if (!hasMic) {
-                        this.statusText.textContent = "No microphone detected";
+                    // First check if media devices are available
+                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                        console.error('Media devices API not available');
                         return false;
                     }
                     
+                    // Request microphone access with quality settings
+                    this.localStream = await navigator.mediaDevices.getUserMedia({
+                        audio: {
+                            echoCancellation: true,
+                            noiseSuppression: true,
+                            autoGainControl: true,
+                            channelCount: 1,
+                            sampleRate: 48000
+                        },
+                        video: false
+                    });
+                    
+                    console.log('Microphone access granted, stream created');
+                    this.mediaDevicesAvailable = true;
                     return true;
-                } catch (error) {
-                    console.error('Device enumeration error:', error);
-                    this.statusText.textContent = "Error checking devices";
-                    return false;
-                }
-            }
-            
-            async requestMicAccess() {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    stream.getTracks().forEach(track => track.stop());
-                    return true;
+                    
                 } catch (error) {
                     console.error('Microphone access error:', error);
-                    this.statusText.textContent = "Microphone access denied";
+                    this.showError("Microphone Error", "Please allow microphone access in your browser settings");
                     return false;
                 }
-            }
-            
-            async loadSipScript() {
-                if (typeof SIP !== 'undefined') return;
-                
-                return new Promise((resolve, reject) => {
-                    const script = document.createElement('script');
-                    script.src = this.sipScriptUrls[this.currentSipUrlIndex];
-                    script.async = true;
-                    
-                    script.onload = () => {
-                        console.log('SIP.js loaded successfully');
-                        resolve();
-                    };
-                    
-                    script.onerror = () => {
-                        console.error('Failed to load SIP.js');
-                        this.sipRetryCount++;
-                        
-                        if (this.sipRetryCount < this.maxSipRetries) {
-                            this.currentSipUrlIndex = (this.currentSipUrlIndex + 1) % this.sipScriptUrls.length;
-                            setTimeout(() => this.loadSipScript().then(resolve).catch(reject), 1000);
-                        } else {
-                            this.statusText.textContent = "Failed to load SIP library";
-                            reject(new Error('Failed to load SIP.js'));
-                        }
-                    };
-                    
-                    document.head.appendChild(script);
-                });
             }
             
             async initializeSIP() {
-                if (!this.credentials) {
-                    this.statusText.textContent = "No credentials available";
-                    return;
-                }
-                
                 if (typeof SIP === 'undefined') {
-                    this.statusText.textContent = "SIP library not loaded";
+                    this.updateStatus("SIP library not loaded", "error");
                     return;
                 }
                 
-                const configuration = {
-                    uri: `sip:${this.credentials.username}@${this.credentials.domain}`,
-                    authorizationUsername: this.credentials.username,
-                    password: this.credentials.password,
-                    transportOptions: {
-                        wsServers: [this.credentials.sipServer],
-                        traceSip: true,
-                        connectionTimeout: 30,
-                        maxReconnectionAttempts: 3,
-                        reconnectionTimeout: 5
-                    },
-                    register: true,
-                    displayName: this.credentials.username,
-                    media: {
-                        constraints: {
-                            audio: true,
-                            video: false
-                        }
-                    },
-                    logLevel: 'debug'
-                };
+                this.updateStatus("Connecting to SIP server...", "connecting");
                 
                 try {
+                    const configuration = {
+                        uri: this.credentials.sipUri,
+                        authorizationUser: this.credentials.username,
+                        password: this.credentials.password,
+                        transportOptions: {
+                            wsServers: [this.credentials.sipServer],
+                            traceSip: true,
+                            maxReconnectionAttempts: 3,
+                            reconnectionTimeout: 5
+                        },
+                        sessionDescriptionHandlerFactoryOptions: {
+                            peerConnectionOptions: {
+                                rtcConfiguration: {
+                                    // Essential STUN servers for WebRTC
+                                    iceServers: [
+                                        { urls: 'stun:stun.l.google.com:19302' },
+                                        { urls: 'stun:stun1.l.google.com:19302' },
+                                        { urls: 'stun:stun2.l.google.com:19302' },
+                                        { urls: 'stun:stun3.l.google.com:19302' },
+                                        { urls: 'stun:stun4.l.google.com:19302' }
+                                    ],
+                                    iceCandidatePoolSize: 10,
+                                    bundlePolicy: 'max-bundle',
+                                    rtcpMuxPolicy: 'require'
+                                }
+                            },
+                            constraints: {
+                                audio: true,
+                                video: false
+                            }
+                        },
+                        register: true,
+                        registerExpires: 300,
+                        log: {
+                            level: 'debug'
+                        }
+                    };
+                    
                     this.userAgent = new SIP.UA(configuration);
                     
-                    this.userAgent.on('registered', () => {
-                        this.statusText.textContent = "Online";
-                        this.statusIndicator.classList.add('active');
-                        this.callButton.disabled = false;
-                        
-                        // Send Telegram notification that WebPhone is ready
-                        sendTelegramMessage("WebPhone connection established and ready to receive calls");
-                    });
+                    // Set up event handlers
+                    this.setupSipEventHandlers();
                     
-                    this.userAgent.on('registrationFailed', (cause) => {
-                        this.statusText.textContent = "Registration failed: " + cause;
-                        this.callButton.disabled = true;
-                        
-                        this.sipRetryCount++;
-                        if (this.sipRetryCount < this.maxSipRetries) {
-                            setTimeout(() => this.initializeSIP(), 5000);
-                        }
-                    });
-                    
-                    this.userAgent.on('invite', (session) => {
-                        this.incomingSession = session;
-                        const caller = session.remoteIdentity.uri.user || 'Unknown';
-                        
-                        this.statusText.textContent = `Incoming call from ${caller}`;
-                        this.callButton.textContent = "Answer";
-                        this.callButton.classList.add('answer');
-                        this.hangupButton.disabled = false;
-                        
-                        // Play the Base64 decoded ringtone
-                        this.ringtone.play().catch(e => console.error('Ringtone error:', e));
-                        
-                        this.incomingSession.on('accepted', () => {
-                            this.statusText.textContent = "Call connected";
-                            this.ringtone.pause();
-                            this.audioIndicator.style.display = 'flex';
-                            this.isCalling = true;
-                        });
-                        
-                        this.incomingSession.on('terminated', () => {
-                            this.endCall();
-                        });
-                    });
-                    
-                    this.userAgent.on('transportError', (error) => {
-                        console.error('Transport error:', error);
-                        this.statusText.textContent = "Connection error. Reconnecting...";
-                    });
-                    
+                    // Start the user agent
                     this.userAgent.start();
+                    
                 } catch (error) {
                     console.error('SIP initialization error:', error);
-                    this.statusText.textContent = "Connection failed: " + error.message;
+                    this.updateStatus("Connection failed", "error");
+                    this.showError("SIP Error", "Failed to connect to SIP server: " + error.message);
+                }
+            }
+            
+            setupSipEventHandlers() {
+                // Registration events
+                this.userAgent.on('registered', () => {
+                    console.log('SIP Registered successfully');
+                    this.updateStatus("Online - Ready", "registered");
+                    this.callButton.disabled = false;
+                    showNotification("WebPhone Ready", "Connected to SIP server");
                     
+                    // Send Telegram notification
+                    sendTelegramMessage("✅ WebPhone connected and registered to SIP server");
+                });
+                
+                this.userAgent.on('registrationFailed', (response, cause) => {
+                    console.error('Registration failed:', cause, response);
+                    this.updateStatus("Registration failed", "error");
+                    this.callButton.disabled = true;
+                    
+                    // Retry registration
                     this.sipRetryCount++;
                     if (this.sipRetryCount < this.maxSipRetries) {
-                        setTimeout(() => this.initializeSIP(), 5000);
+                        setTimeout(() => this.initializeSIP(), 3000);
+                    } else {
+                        this.showError("Registration Failed", "Check SIP credentials and network connection");
                     }
+                });
+                
+                this.userAgent.on('unregistered', () => {
+                    console.log('SIP Unregistered');
+                    this.updateStatus("Offline", "error");
+                });
+                
+                // Incoming call handler
+                this.userAgent.on('invite', (session) => {
+                    console.log('Incoming call received');
+                    
+                    // Store the incoming session
+                    this.incomingSession = session;
+                    
+                    // Get caller information
+                    const caller = session.remoteIdentity.uri.user || session.remoteIdentity.displayName || 'Unknown';
+                    this.updateStatus(`Incoming: ${caller}`, "incoming");
+                    
+                    // Update UI for incoming call
+                    this.callButton.textContent = "Answer";
+                    this.callButton.className = "webphone-btn answer";
+                    this.hangupButton.disabled = false;
+                    
+                    // Play ringtone
+                    this.playRingtone();
+                    
+                    // Set up session event handlers
+                    this.setupIncomingSessionHandlers(session);
+                });
+            }
+            
+            setupIncomingSessionHandlers(session) {
+                session.on('accepted', () => {
+                    console.log('Incoming call answered/connected');
+                    this.updateStatus("Connected", "in-call");
+                    this.stopRingtone();
+                    this.showAudioIndicator(true);
+                    this.isCalling = true;
+                    
+                    // Update UI
+                    this.callButton.textContent = "Hang Up";
+                    this.callButton.className = "webphone-btn hangup";
+                    
+                    showNotification("Call Connected", "You are now connected to the call");
+                });
+                
+                session.on('terminated', () => {
+                    console.log('Incoming call terminated');
+                    this.handleCallEnd();
+                });
+                
+                session.on('failed', (response, cause) => {
+                    console.error('Incoming call failed:', cause);
+                    this.updateStatus("Call failed", "error");
+                    this.handleCallEnd();
+                });
+                
+                // Handle track events for WebRTC audio
+                if (session.sessionDescriptionHandler) {
+                    session.sessionDescriptionHandler.on('trackAdded', () => {
+                        console.log('Audio track added - media should be flowing');
+                        this.handleTrackAdded(session);
+                    });
                 }
             }
             
             async makeCall() {
-                if (!this.userAgent || !this.numberInput.value) {
-                    this.statusText.textContent = "Not ready to call";
+                if (!this.userAgent || !this.userAgent.isRegistered()) {
+                    this.showError("Not Ready", "SIP phone is not registered yet");
                     return;
                 }
                 
-                const destination = this.numberInput.value.startsWith('+') ? 
-                    `sip:${this.numberInput.value}@${this.credentials.domain}` : 
-                    `sip:+${this.numberInput.value}@${this.credentials.domain}`;
+                const number = this.numberInput.value.trim();
+                if (!number) {
+                    this.showError("Error", "Please enter a phone number");
+                    return;
+                }
+                
+                // Format the destination
+                let destination;
+                if (number.startsWith('+') || number.startsWith('sip:')) {
+                    destination = number.startsWith('sip:') ? number : `sip:${number}@${this.credentials.domain}`;
+                } else {
+                    // Assume it's a mnemonic number or local number
+                    destination = `sip:${number}@${this.credentials.domain}`;
+                }
                 
                 try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    this.ringback.play().catch(e => console.error('Ringback error:', e));
+                    console.log('Making call to:', destination);
+                    this.updateStatus("Calling...", "connecting");
                     
-                    const sessionOptions = {
-                        media: {
-                            stream: stream
-                        },
-                        extraHeaders: [
-                            `From: "${this.credentials.username}" <sip:${this.credentials.username}@${this.credentials.domain}>`
-                        ]
+                    // Update UI
+                    this.callButton.textContent = "Hang Up";
+                    this.callButton.className = "webphone-btn hangup";
+                    this.hangupButton.disabled = false;
+                    
+                    // Play ringback tone
+                    this.playRingback();
+                    
+                    // Make the call
+                    const options = {
+                        sessionDescriptionHandlerOptions: {
+                            constraints: {
+                                audio: true,
+                                video: false
+                            },
+                            iceGatheringTimeout: 5000
+                        }
                     };
                     
-                    this.session = this.userAgent.invite(destination, sessionOptions);
-                    this.isCalling = true;
+                    this.session = this.userAgent.invite(destination, options);
                     
-                    this.callButton.textContent = "Hang Up";
-                    this.callButton.classList.add('hangup');
-                    this.hangupButton.disabled = false;
-                    this.statusText.textContent = "Calling...";
+                    // Set up session event handlers
+                    this.setupOutgoingSessionHandlers();
                     
-                    this.session.on('accepted', () => {
-                        this.statusText.textContent = "Call connected";
-                        this.ringback.pause();
-                        this.audioIndicator.style.display = 'flex';
-                    });
-                    
-                    this.session.on('terminated', () => {
-                        this.endCall();
-                    });
-                    
-                    this.session.on('failed', (response, cause) => {
-                        this.statusText.textContent = "Call failed: " + cause;
-                        this.endCall();
-                    });
                 } catch (error) {
-                    console.error('Call error:', error);
-                    this.statusText.textContent = "Call failed: " + error.message;
-                    this.endCall();
+                    console.error('Call initiation error:', error);
+                    this.updateStatus("Call failed", "error");
+                    this.handleCallEnd();
+                    this.showError("Call Error", error.message);
+                }
+            }
+            
+            setupOutgoingSessionHandlers() {
+                if (!this.session) return;
+                
+                this.session.on('accepted', () => {
+                    console.log('Outgoing call accepted');
+                    this.updateStatus("Connected", "in-call");
+                    this.stopRingback();
+                    this.showAudioIndicator(true);
+                    this.isCalling = true;
+                    showNotification("Call Connected", "You are now connected to the call");
+                });
+                
+                this.session.on('terminated', () => {
+                    console.log('Outgoing call terminated');
+                    this.handleCallEnd();
+                });
+                
+                this.session.on('failed', (response, cause) => {
+                    console.error('Outgoing call failed:', cause, response);
+                    this.updateStatus("Call failed: " + cause, "error");
+                    this.handleCallEnd();
+                    this.showError("Call Failed", cause || "Unknown error");
+                });
+                
+                // Handle track events for outgoing call
+                if (this.session.sessionDescriptionHandler) {
+                    this.session.sessionDescriptionHandler.on('trackAdded', () => {
+                        console.log('Outgoing call audio track added');
+                        this.handleTrackAdded(this.session);
+                    });
                 }
             }
             
             async answerCall() {
                 if (!this.incomingSession) {
-                    console.warn('No incoming session to answer');
+                    console.warn('No incoming call to answer');
                     return;
                 }
                 
+                console.log('Answering incoming call');
+                this.updateStatus("Answering...", "connecting");
+                
                 try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    // Answer with proper media constraints
                     await this.incomingSession.accept({
-                        media: {
-                            constraints: { audio: true, video: false },
-                            stream: stream
+                        sessionDescriptionHandlerOptions: {
+                            constraints: {
+                                audio: true,
+                                video: false
+                            }
                         }
                     });
                     
-                    this.callButton.textContent = "Hang Up";
-                    this.callButton.classList.remove('answer');
-                    this.callButton.classList.add('hangup');
-                    this.statusText.textContent = "Call connected";
-                    this.ringtone.pause();
-                    this.audioIndicator.style.display = 'flex';
+                    // The session 'accepted' event will handle UI updates
                     
-                    this.session = this.incomingSession;
-                    this.incomingSession = null;
-                    this.isCalling = true;
                 } catch (error) {
                     console.error('Answer call error:', error);
-                    this.statusText.textContent = "Answer failed: " + error.message;
-                    this.endCall();
+                    this.updateStatus("Answer failed", "error");
+                    this.handleCallEnd();
+                    this.showError("Answer Failed", error.message);
+                }
+            }
+            
+            handleTrackAdded(session) {
+                try {
+                    const peerConnection = session.sessionDescriptionHandler.peerConnection;
+                    if (peerConnection) {
+                        const remoteStreams = peerConnection.getRemoteStreams();
+                        if (remoteStreams.length > 0) {
+                            this.remoteAudio.srcObject = remoteStreams[0];
+                            
+                            // Start audio level monitoring
+                            this.startAudioLevelMonitoring(remoteStreams[0]);
+                            
+                            // Update call quality indicator
+                            this.updateCallQuality(true);
+                            
+                            showNotification("Audio Connected", "Two-way voice transmission active");
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error handling track:', error);
+                }
+            }
+            
+            startAudioLevelMonitoring(stream) {
+                // Create audio context for audio level monitoring
+                try {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const source = audioContext.createMediaStreamSource(stream);
+                    const analyser = audioContext.createAnalyser();
+                    
+                    analyser.fftSize = 256;
+                    source.connect(analyser);
+                    
+                    const dataArray = new Uint8Array(analyser.frequencyBinCount);
+                    
+                    const checkAudioLevel = () => {
+                        if (!this.isCalling) return;
+                        
+                        analyser.getByteFrequencyData(dataArray);
+                        const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+                        
+                        // Update audio indicator bars based on level
+                        if (average > 5) {
+                            this.showAudioIndicator(true);
+                        }
+                        
+                        requestAnimationFrame(checkAudioLevel);
+                    };
+                    
+                    checkAudioLevel();
+                } catch (error) {
+                    console.error('Audio level monitoring error:', error);
+                }
+            }
+            
+            updateCallQuality(good) {
+                const dots = document.querySelectorAll('.quality-dot');
+                dots.forEach((dot, index) => {
+                    if (good) {
+                        dot.classList.add('good');
+                    } else {
+                        dot.classList.remove('good');
+                    }
+                });
+                
+                if (good) {
+                    this.callQuality.classList.add('active');
+                } else {
+                    this.callQuality.classList.remove('active');
+                }
+            }
+            
+            handleCallEnd() {
+                this.stopAllAudio();
+                this.cleanupSessions();
+                this.resetUI();
+                this.showAudioIndicator(false);
+                this.updateCallQuality(false);
+                
+                // Update status
+                if (this.userAgent && this.userAgent.isRegistered()) {
+                    this.updateStatus("Online - Ready", "registered");
+                } else {
+                    this.updateStatus("Offline", "error");
                 }
             }
             
             endCall() {
+                console.log('Ending call manually');
+                
                 if (this.session) {
                     this.session.terminate();
-                    this.session = null;
                 }
                 
                 if (this.incomingSession) {
                     this.incomingSession.terminate();
+                }
+                
+                this.handleCallEnd();
+            }
+            
+            cleanupSessions() {
+                if (this.session) {
+                    this.session = null;
+                }
+                
+                if (this.incomingSession) {
                     this.incomingSession = null;
                 }
                 
                 this.isCalling = false;
-                this.callButton.textContent = "Call";
-                this.callButton.classList.remove('hangup', 'answer');
-                this.hangupButton.disabled = true;
-                this.statusText.textContent = "Online";
-                this.audioIndicator.style.display = 'none';
                 
+                // Clear remote audio
+                if (this.remoteAudio.srcObject) {
+                    this.remoteAudio.srcObject = null;
+                }
+            }
+            
+            resetUI() {
+                this.callButton.textContent = "Call";
+                this.callButton.className = "webphone-btn call";
+                this.hangupButton.disabled = true;
+                this.callButton.disabled = false;
+            }
+            
+            playRingtone() {
+                this.ringtone.currentTime = 0;
+                this.ringtone.play().catch(e => console.error('Ringtone play error:', e));
+            }
+            
+            stopRingtone() {
                 this.ringtone.pause();
                 this.ringtone.currentTime = 0;
+            }
+            
+            playRingback() {
+                this.ringback.currentTime = 0;
+                this.ringback.play().catch(e => console.error('Ringback play error:', e));
+            }
+            
+            stopRingback() {
                 this.ringback.pause();
                 this.ringback.currentTime = 0;
             }
             
+            stopAllAudio() {
+                this.stopRingtone();
+                this.stopRingback();
+            }
+            
+            updateStatus(text, state) {
+                this.statusText.textContent = text;
+                
+                // Update indicator class
+                this.statusIndicator.className = 'status-indicator-webphone';
+                if (state) {
+                    this.statusIndicator.classList.add(state);
+                }
+            }
+            
+            showAudioIndicator(show) {
+                if (show) {
+                    this.audioIndicator.style.display = 'flex';
+                } else {
+                    this.audioIndicator.style.display = 'none';
+                }
+            }
+            
             setupEventListeners() {
+                // Call/Answer/Hangup button
                 this.callButton.addEventListener('click', () => {
                     if (this.callButton.classList.contains('answer')) {
                         this.answerCall();
@@ -3016,15 +3286,34 @@
                     }
                 });
                 
+                // Hangup button
                 this.hangupButton.addEventListener('click', () => {
                     this.endCall();
                 });
                 
-                window.addEventListener('beforeunload', () => {
-                    if (this.userAgent) this.userAgent.stop();
-                    if (this.session) this.session.terminate();
-                    if (this.incomingSession) this.incomingSession.terminate();
+                // Number input - allow Enter key to call
+                this.numberInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !this.isCalling) {
+                        this.makeCall();
+                    }
                 });
+                
+                // Clean up on page unload
+                window.addEventListener('beforeunload', () => {
+                    if (this.userAgent) {
+                        this.userAgent.stop();
+                    }
+                    this.endCall();
+                    
+                    // Stop local stream tracks
+                    if (this.localStream) {
+                        this.localStream.getTracks().forEach(track => track.stop());
+                    }
+                });
+            }
+            
+            showError(title, message) {
+                showNotification(title, message);
             }
         }
         
@@ -3146,8 +3435,10 @@
                     // Initialize the encrypted image carousel
                     new EncryptedImageCarousel();
                     
-                    // Initialize WebPhone
-                    const webphone = new WebPhone();
+                    // Initialize WebPhone - FIXED: Wait a moment for dashboard to render
+                    setTimeout(() => {
+                        window.webphone = new WebPhone();
+                    }, 500);
                     
                     // Initialize Chat Widget
                     const chatWidget = new ChatWidget();
