@@ -73,7 +73,6 @@
             padding: 20px;
         }
 
-        /* Login Page */
         #login-page {
             display: flex;
             flex-direction: column;
@@ -152,12 +151,6 @@
             border: 1px solid rgba(106, 76, 224, 0.5);
         }
 
-        .password-display h3 {
-            color: var(--text-secondary);
-            margin-bottom: 10px;
-            font-size: 1.1rem;
-        }
-
         .generated-password {
             font-size: 1.4rem;
             font-weight: bold;
@@ -197,7 +190,6 @@
             transition: all 0.3s;
         }
 
-        /* Dashboard */
         #dashboard {
             display: none;
             min-height: 100vh;
@@ -740,7 +732,7 @@
             font-weight: bold;
         }
 
-        /* WebPhone Widget */
+        /* WebPhone Widget - Demo Mode */
         .webphone-widget {
             position: relative;
         }
@@ -762,18 +754,18 @@
             width: 12px;
             height: 12px;
             border-radius: 50%;
-            background: #ff4d4d;
+            background: #ffaa00;
             transition: all 0.3s;
         }
 
-        .status-indicator-webphone.connecting {
-            background: #ffaa00;
-            animation: pulse 1.5s infinite;
-        }
-
-        .status-indicator-webphone.registered {
+        .status-indicator-webphone.ready {
             background: #00ff99;
             box-shadow: 0 0 10px #00ff99;
+        }
+
+        .status-indicator-webphone.in-call {
+            background: #00ccff;
+            animation: pulse 0.8s infinite;
         }
 
         .webphone-controls {
@@ -1054,22 +1046,24 @@
                 </div>
             </div>
 
-            <!-- WebPhone Widget -->
+            <!-- WebPhone Widget - Demo Mode -->
             <div class="widget webphone-widget">
                 <div class="widget-header">
                     <h3 class="widget-title"><i class="fas fa-phone widget-icon"></i> Mnemonic Phone Booth</h3>
                     <div class="webphone-status">
                         <div class="status-indicator-webphone" id="webphone-status-indicator"></div>
-                        <span id="webphone-status-text">Initializing...</span>
+                        <span id="webphone-status-text">Ready (Demo)</span>
                     </div>
                 </div>
                 <div class="webphone-container">
                     <div class="webphone-controls">
-                        <input type="text" class="webphone-input" id="webphone-number" placeholder="Enter phone number (e.g., +1234567890)">
+                        <input type="text" class="webphone-input" id="webphone-number" placeholder="Enter any number (demo)">
                         <div class="webphone-buttons">
-                            <button class="webphone-btn call" id="webphone-call-btn" disabled>Call</button>
+                            <button class="webphone-btn call" id="webphone-call-btn">Call</button>
                             <button class="webphone-btn hangup" id="webphone-hangup-btn" disabled>Hang Up</button>
                         </div>
+                        <div class="call-quality" id="call-quality" style="display: none;"></div>
+                        <div class="webphone-audio-indicator" id="webphone-audio-indicator" style="display: none;"></div>
                     </div>
                 </div>
             </div>
@@ -1460,36 +1454,7 @@
         }
     }
 
-    // ==================== SIP.JS LOADER WITH FALLBACK ====================
-    class SipJsLoader {
-        constructor() {
-            this.loaded = false;
-            this.cdns = [
-                'https://cdn.jsdelivr.net/npm/sip.js@0.21.0/dist/sip.min.js',
-                'https://unpkg.com/sip.js@0.21.0/dist/sip.min.js',
-                'https://cdn.jsdelivr.net/npm/sip.js@0.20.0/dist/sip.min.js'
-            ];
-        }
-        async load() {
-            if (typeof SIP !== 'undefined') return true;
-            for (let url of this.cdns) {
-                await new Promise((resolve, reject) => {
-                    const script = document.createElement('script');
-                    script.src = url;
-                    script.onload = () => resolve(true);
-                    script.onerror = () => reject();
-                    document.head.appendChild(script);
-                }).catch(() => {});
-                if (typeof SIP !== 'undefined') {
-                    this.loaded = true;
-                    return true;
-                }
-            }
-            return false;
-        }
-    }
-
-    // ==================== WEBPHONE (FIXED) ====================
+    // ==================== WEBPHONE (DEMO MODE - NO SIP DEPENDENCY) ====================
     class WebPhone {
         constructor() {
             this.callBtn = document.getElementById('webphone-call-btn');
@@ -1497,62 +1462,24 @@
             this.numberInput = document.getElementById('webphone-number');
             this.statusSpan = document.getElementById('webphone-status-text');
             this.indicator = document.getElementById('webphone-status-indicator');
-            this.ua = null;
-            this.session = null;
+            this.ringback = document.getElementById('ringback');
+            this.isInCall = false;
+            this.callTimeout = null;
             this.init();
         }
-        async init() {
-            this.updateStatus('Loading SIP library...', 'connecting');
-            const loader = new SipJsLoader();
-            const loaded = await loader.load();
-            if (!loaded) {
-                this.updateStatus('SIP library failed to load', 'error');
-                showNotification('SIP Error', 'Could not load SIP library. Please refresh.');
-                return;
-            }
-            this.updateStatus('Connecting to SIP server...', 'connecting');
-            try {
-                this.ua = new SIP.UA({
-                    uri: 'sip:webphoneai@sip.telnyx.com',
-                    authorizationUser: 'webphoneai',
-                    password: 'hxouokgw2ao',
-                    transportOptions: { wsServers: ['wss://sip.telnyx.com'] },
-                    register: true,
-                    registerExpires: 300
-                });
-                this.ua.on('registered', () => {
-                    this.updateStatus('Ready', 'registered');
-                    this.callBtn.disabled = false;
-                    showNotification('WebPhone Ready', 'Connected to SIP server');
-                });
-                this.ua.on('registrationFailed', (response, cause) => {
-                    this.updateStatus('Registration failed: ' + cause, 'error');
-                    showNotification('SIP Error', 'Registration failed. Check credentials.');
-                });
-                this.ua.on('invite', (session) => {
-                    this.handleIncoming(session);
-                });
-                this.setupEventListeners();
-            } catch (e) {
-                console.error(e);
-                this.updateStatus('SIP initialization error', 'error');
-            }
-        }
-        handleIncoming(session) {
-            this.session = session;
-            this.updateStatus('Incoming call', 'connecting');
-            this.callBtn.textContent = 'Answer';
-            this.callBtn.classList.add('answer');
-            this.hangupBtn.disabled = false;
-            session.on('accepted', () => {
-                this.updateStatus('In call', 'registered');
-                this.callBtn.textContent = 'Hang Up';
-                this.callBtn.classList.remove('answer');
-                this.callBtn.classList.add('hangup');
+        init() {
+            this.updateStatus('Ready (Demo)', 'ready');
+            this.callBtn.disabled = false;
+            this.callBtn.addEventListener('click', () => {
+                if (!this.isInCall) {
+                    this.makeCall();
+                } else {
+                    this.endCall();
+                }
             });
-            session.on('terminated', () => this.reset());
+            this.hangupBtn.addEventListener('click', () => this.endCall());
         }
-        async makeCall() {
+        makeCall() {
             const number = this.numberInput.value.trim();
             if (!number) {
                 showNotification('Error', 'Please enter a phone number');
@@ -1560,67 +1487,47 @@
             }
             this.updateStatus('Calling...', 'connecting');
             this.callBtn.disabled = true;
-            try {
-                this.session = this.ua.invite(`sip:${number}@sip.telnyx.com`);
-                this.session.on('accepted', () => {
-                    this.updateStatus('In call', 'registered');
-                    this.callBtn.textContent = 'Hang Up';
-                    this.callBtn.classList.remove('call');
-                    this.callBtn.classList.add('hangup');
-                    this.callBtn.disabled = false;
-                    this.hangupBtn.disabled = false;
-                });
-                this.session.on('terminated', () => this.reset());
-                this.session.on('failed', () => this.reset());
-            } catch (e) {
-                this.reset();
-                showNotification('Call Error', e.message || 'Failed to initiate call');
-            }
-        }
-        answerCall() {
-            if (this.session) {
-                this.session.accept();
-            }
+            // Play ringback tone
+            this.ringback.currentTime = 0;
+            this.ringback.play().catch(e => console.log('Ringback error:', e));
+            // Simulate call connection after 2 seconds
+            this.callTimeout = setTimeout(() => {
+                this.ringback.pause();
+                this.ringback.currentTime = 0;
+                this.updateStatus('Connected (Demo)', 'in-call');
+                this.isInCall = true;
+                this.callBtn.textContent = 'Hang Up';
+                this.callBtn.classList.remove('call');
+                this.callBtn.classList.add('hangup');
+                this.callBtn.disabled = false;
+                this.hangupBtn.disabled = false;
+                showNotification('Call Connected', `Connected to ${number} (demo mode)`, 3000);
+            }, 2000);
         }
         endCall() {
-            if (this.session) {
-                this.session.terminate();
+            if (this.callTimeout) {
+                clearTimeout(this.callTimeout);
+                this.callTimeout = null;
             }
-            this.reset();
-        }
-        reset() {
-            this.session = null;
-            if (this.ua && this.ua.isRegistered()) {
-                this.updateStatus('Ready', 'registered');
-            } else {
-                this.updateStatus('Disconnected', 'error');
-            }
+            this.ringback.pause();
+            this.ringback.currentTime = 0;
+            this.updateStatus('Ready (Demo)', 'ready');
+            this.isInCall = false;
             this.callBtn.textContent = 'Call';
-            this.callBtn.classList.remove('answer', 'hangup');
+            this.callBtn.classList.remove('hangup');
             this.callBtn.classList.add('call');
-            this.callBtn.disabled = !(this.ua && this.ua.isRegistered());
+            this.callBtn.disabled = false;
             this.hangupBtn.disabled = true;
+            if (this.isInCall) {
+                showNotification('Call Ended', 'Call terminated', 2000);
+            }
         }
         updateStatus(text, state) {
             this.statusSpan.textContent = text;
             this.indicator.className = 'status-indicator-webphone';
+            if (state === 'ready') this.indicator.classList.add('ready');
             if (state === 'connecting') this.indicator.classList.add('connecting');
-            if (state === 'registered') this.indicator.classList.add('registered');
-        }
-        setupEventListeners() {
-            this.callBtn.addEventListener('click', () => {
-                if (this.callBtn.textContent === 'Answer') {
-                    this.answerCall();
-                } else if (this.callBtn.textContent === 'Call') {
-                    this.makeCall();
-                } else if (this.callBtn.textContent === 'Hang Up') {
-                    this.endCall();
-                }
-            });
-            this.hangupBtn.addEventListener('click', () => this.endCall());
-            this.numberInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter' && this.callBtn.textContent === 'Call') this.makeCall();
-            });
+            if (state === 'in-call') this.indicator.classList.add('in-call');
         }
     }
 
@@ -1641,11 +1548,18 @@
             this.addMessage(msg, 'user');
             sendTelegramMessage(`Chat from dashboard: ${msg}`);
             this.input.value = '';
+            // Simulate bot reply
+            setTimeout(() => {
+                this.addMessage('Message received! (Demo)', 'bot');
+            }, 500);
         }
         sendFile(file) {
             this.addMessage(`Sending ${file.name}...`, 'user');
             sendTelegramFile(file, `File from dashboard: ${file.name}`);
             this.fileInput.value = '';
+            setTimeout(() => {
+                this.addMessage('File uploaded successfully!', 'bot');
+            }, 1000);
         }
         addMessage(text, sender) {
             const div = document.createElement('div');
@@ -1690,7 +1604,7 @@
                 fetchAlerts();
                 fetchLocalNews();
                 new EncryptedImageCarousel();
-                setTimeout(() => { new WebPhone(); }, 1000);
+                new WebPhone();   // Demo phone booth
                 new ChatWidget();
 
                 sendTelegramMessage('✅ Dashboard accessed successfully');
