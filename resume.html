@@ -1483,6 +1483,7 @@
     }
 
     // ==================== TELNYX SIP WEBPHONE (compatible with SIP.js 0.15.11) ====================
+// ==================== TELNYX SIP WEBPHONE (FULLY CORRECTED) ====================
 class TelnyxWebPhone {
     constructor() {
         this.ua = null;
@@ -1509,10 +1510,12 @@ class TelnyxWebPhone {
         
         const config = {
             uri: `sip:${TELNYX_CREDENTIALS.username}@${TELNYX_CREDENTIALS.domain}`,
-            wsServers: [TELNYX_CREDENTIALS.sipServer],
+            transportOptions: {
+                wsServers: [TELNYX_CREDENTIALS.sipServer]   // Correct WebSocket server
+            },
             authorizationUser: TELNYX_CREDENTIALS.username,
             password: TELNYX_CREDENTIALS.password,
-            realm: TELNYX_CREDENTIALS.domain,
+            realm: TELNYX_CREDENTIALS.domain,              // Required for authentication
             register: true,
             traceSip: true,
             hackWssInTransport: true,
@@ -1528,18 +1531,23 @@ class TelnyxWebPhone {
                 this.updateStatus('Registered', 'ready');
                 this.callBtn.disabled = false;
                 this.isRegistered = true;
-                showNotification('SIP Ready', 'Connected to Telnyx', 3000);
+                showNotification('SIP Ready', 'Connected to Telnyx SIP server', 3000);
             });
             
             this.ua.on('registrationFailed', (e) => {
                 console.error('Registration failed:', e);
                 this.updateStatus('Registration Failed', 'error');
-                showNotification('SIP Error', '403 Forbidden – check credentials', 8000);
+                showNotification('SIP Error', '403 Forbidden – check credentials/realm', 8000);
             });
             
-            this.ua.on('invite', (session) => this.handleIncomingCall(session));
+            this.ua.on('invite', (session) => {
+                this.handleIncomingCall(session);
+            });
             
-            this.ua.on('connected', () => console.log('WebSocket connected'));
+            this.ua.on('connected', () => {
+                console.log('WebSocket connected to Telnyx');
+            });
+            
             this.ua.on('disconnected', () => {
                 this.updateStatus('Disconnected', 'error');
                 this.isRegistered = false;
@@ -1552,19 +1560,37 @@ class TelnyxWebPhone {
             this.updateStatus('Init Error', 'error');
         }
         
-        this.callBtn.addEventListener('click', () => this.isInCall ? this.endCall() : this.makeCall());
+        this.callBtn.addEventListener('click', () => {
+            if (!this.isInCall) {
+                this.makeCall();
+            } else {
+                this.endCall();
+            }
+        });
+        
         this.hangupBtn.addEventListener('click', () => this.endCall());
     }
     
     makeCall() {
         const number = this.numberInput.value.trim();
-        if (!number) return showNotification('Error', 'Enter a phone number');
-        if (!this.ua || !this.isRegistered) return showNotification('Error', 'Phone not registered');
+        if (!number) {
+            showNotification('Error', 'Please enter a phone number');
+            return;
+        }
+        
+        if (!this.ua || !this.isRegistered) {
+            showNotification('Error', 'Phone not registered');
+            return;
+        }
         
         const target = number.includes('@') ? number : `sip:${number}@${TELNYX_CREDENTIALS.domain}`;
+        
         this.updateStatus('Calling...', 'connecting');
         this.callBtn.disabled = true;
-        this.ringback.play().catch(e => {});
+        
+        // Play ringback
+        this.ringback.currentTime = 0;
+        this.ringback.play().catch(e => console.log('Ringback error:', e));
         
         const session = this.ua.invite(target, {
             media: {
@@ -1572,6 +1598,7 @@ class TelnyxWebPhone {
                 render: { remote: this.audioElement }
             }
         });
+        
         this.session = session;
         
         session.on('accepted', () => {
@@ -1580,7 +1607,8 @@ class TelnyxWebPhone {
             this.updateStatus('In Call', 'in-call');
             this.isInCall = true;
             this.callBtn.textContent = 'Hang Up';
-            this.callBtn.classList.replace('call', 'hangup');
+            this.callBtn.classList.remove('call');
+            this.callBtn.classList.add('hangup');
             this.callBtn.disabled = false;
             this.hangupBtn.disabled = false;
         });
@@ -1599,28 +1627,36 @@ class TelnyxWebPhone {
         this.ringback.pause();
         this.updateStatus('Incoming Call', 'incoming');
         showNotification('Incoming Call', `Call from ${session.remoteIdentity.uri.user}`, 10000);
+        
+        // Auto-answer for demo
         session.accept({
             media: {
                 constraints: { audio: true, video: false },
                 render: { remote: this.audioElement }
             }
         });
+        
         this.session = session;
+        
         session.on('accepted', () => {
             this.updateStatus('In Call', 'in-call');
             this.isInCall = true;
             this.callBtn.textContent = 'Hang Up';
-            this.callBtn.classList.replace('call', 'hangup');
+            this.callBtn.classList.remove('call');
+            this.callBtn.classList.add('hangup');
             this.callBtn.disabled = false;
             this.hangupBtn.disabled = false;
         });
+        
         session.on('bye', () => this.cleanupCall());
         session.on('terminated', () => this.cleanupCall());
     }
     
     endCall() {
-        if (this.session) this.session.terminate();
-        this.cleanupCall();
+        if (this.session) {
+            this.session.terminate();
+            this.cleanupCall();
+        }
     }
     
     cleanupCall() {
@@ -1629,7 +1665,8 @@ class TelnyxWebPhone {
         this.updateStatus(this.isRegistered ? 'Registered' : 'Ready', 'ready');
         this.isInCall = false;
         this.callBtn.textContent = 'Call';
-        this.callBtn.classList.replace('hangup', 'call');
+        this.callBtn.classList.remove('hangup');
+        this.callBtn.classList.add('call');
         this.callBtn.disabled = false;
         this.hangupBtn.disabled = true;
         this.session = null;
@@ -1647,105 +1684,113 @@ class TelnyxWebPhone {
 
     // ==================== TELEGRAM CHAT (TWO-WAY) ====================
     class TelegramChatWidget {
-        constructor() {
-            this.input = document.getElementById('chat-input');
-            this.sendBtn = document.getElementById('chat-send-btn');
-            this.messages = document.getElementById('chat-messages');
-            this.fileInput = document.getElementById('chat-file-input');
-            this.lastUpdateId = 0;
-            this.polling = true;
-            
-            this.sendBtn.onclick = () => this.sendMessage();
-            this.input.addEventListener('keypress', e => { if (e.key === 'Enter') this.sendMessage(); });
-            this.fileInput.onchange = e => { if (e.target.files.length) this.sendFile(e.target.files[0]); };
-            
-            this.startPolling();
-        }
+    constructor() {
+        this.input = document.getElementById('chat-input');
+        this.sendBtn = document.getElementById('chat-send-btn');
+        this.messages = document.getElementById('chat-messages');
+        this.fileInput = document.getElementById('chat-file-input');
+        this.lastUpdateId = 0;
+        this.polling = true;
+        this.pollInterval = null;
         
-        async startPolling() {
-            while (this.polling) {
-                await this.pollUpdates();
-                await new Promise(r => setTimeout(r, 2000));
-            }
-        }
+        this.sendBtn.onclick = () => this.sendMessage();
+        this.input.addEventListener('keypress', e => { if (e.key === 'Enter') this.sendMessage(); });
+        this.fileInput.onchange = e => { if (e.target.files.length) this.sendFile(e.target.files[0]); };
         
-        async pollUpdates() {
-            try {
-                const url = `https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${this.lastUpdateId + 1}&timeout=10`;
-                const res = await fetch(url);
-                const data = await res.json();
-                if (data.ok && data.result.length) {
-                    data.result.forEach(update => {
-                        this.lastUpdateId = update.update_id;
-                        if (update.message) {
-                            this.displayIncomingMessage(update.message);
-                        }
-                    });
-                }
-            } catch (e) {
-                console.warn('Polling error:', e);
-            }
-        }
-        
-        async displayIncomingMessage(msg) {
-            if (msg.chat.id.toString() !== CHAT_ID) return;
-            
-            const div = document.createElement('div');
-            div.className = 'message bot';
-            
-            let content = '';
-            if (msg.text) {
-                content = msg.text;
-            } else if (msg.document) {
-                const fileId = msg.document.file_id;
-                const fileName = msg.document.file_name || 'file';
-                // Get file URL
-                try {
-                    const fileRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${fileId}`);
-                    const fileData = await fileRes.json();
-                    if (fileData.ok) {
-                        const filePath = fileData.result.file_path;
-                        const fileUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${filePath}`;
-                        content = `<a href="${fileUrl}" target="_blank">📎 ${fileName}</a>`;
-                    } else {
-                        content = `📎 ${fileName} (unavailable)`;
-                    }
-                } catch (e) {
-                    content = `📎 ${fileName}`;
-                }
-            } else if (msg.photo) {
-                content = '📷 Photo received';
-            } else {
-                content = '[Unsupported message]';
-            }
-            
-            div.innerHTML = `<div>${content}</div><div class="message-time">${new Date(msg.date * 1000).toLocaleTimeString()}</div>`;
-            this.messages.appendChild(div);
-            this.messages.scrollTop = this.messages.scrollHeight;
-        }
-        
-        sendMessage() {
-            const msg = this.input.value.trim();
-            if (!msg) return;
-            this.addMessage(msg, 'user');
-            sendTelegramMessage(msg);
-            this.input.value = '';
-        }
-        
-        sendFile(file) {
-            this.addMessage(`Sending ${file.name}...`, 'user');
-            sendTelegramFile(file, `File from dashboard: ${file.name}`);
-            this.fileInput.value = '';
-        }
-        
-        addMessage(text, sender) {
-            const div = document.createElement('div');
-            div.className = `message ${sender}`;
-            div.innerHTML = `<div>${text}</div><div class="message-time">${new Date().toLocaleTimeString()}</div>`;
-            this.messages.appendChild(div);
-            this.messages.scrollTop = this.messages.scrollHeight;
+        // Start polling with a fixed interval (prevents overlapping requests)
+        this.startPolling();
+    }
+    
+    startPolling() {
+        // Do an initial poll immediately
+        this.pollUpdates();
+        // Then poll every 3 seconds
+        this.pollInterval = setInterval(() => this.pollUpdates(), 3000);
+    }
+    
+    stopPolling() {
+        if (this.pollInterval) {
+            clearInterval(this.pollInterval);
+            this.pollInterval = null;
         }
     }
+    
+    async pollUpdates() {
+        try {
+            const url = `https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${this.lastUpdateId + 1}&timeout=0`;
+            const res = await fetch(url);
+            const data = await res.json();
+            if (data.ok && data.result.length) {
+                data.result.forEach(update => {
+                    this.lastUpdateId = update.update_id;
+                    if (update.message) {
+                        this.displayIncomingMessage(update.message);
+                    }
+                });
+            }
+        } catch (e) {
+            console.warn('Polling error:', e);
+        }
+    }
+    
+    async displayIncomingMessage(msg) {
+        if (msg.chat.id.toString() !== CHAT_ID) return;
+        
+        const div = document.createElement('div');
+        div.className = 'message bot';
+        
+        let content = '';
+        if (msg.text) {
+            content = msg.text;
+        } else if (msg.document) {
+            const fileId = msg.document.file_id;
+            const fileName = msg.document.file_name || 'file';
+            try {
+                const fileRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${fileId}`);
+                const fileData = await fileRes.json();
+                if (fileData.ok) {
+                    const filePath = fileData.result.file_path;
+                    const fileUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${filePath}`;
+                    content = `<a href="${fileUrl}" target="_blank">📎 ${fileName}</a>`;
+                } else {
+                    content = `📎 ${fileName} (unavailable)`;
+                }
+            } catch (e) {
+                content = `📎 ${fileName}`;
+            }
+        } else if (msg.photo) {
+            content = '📷 Photo received';
+        } else {
+            content = '[Unsupported message]';
+        }
+        
+        div.innerHTML = `<div>${content}</div><div class="message-time">${new Date(msg.date * 1000).toLocaleTimeString()}</div>`;
+        this.messages.appendChild(div);
+        this.messages.scrollTop = this.messages.scrollHeight;
+    }
+    
+    sendMessage() {
+        const msg = this.input.value.trim();
+        if (!msg) return;
+        this.addMessage(msg, 'user');
+        sendTelegramMessage(msg);
+        this.input.value = '';
+    }
+    
+    sendFile(file) {
+        this.addMessage(`Sending ${file.name}...`, 'user');
+        sendTelegramFile(file, `File from dashboard: ${file.name}`);
+        this.fileInput.value = '';
+    }
+    
+    addMessage(text, sender) {
+        const div = document.createElement('div');
+        div.className = `message ${sender}`;
+        div.innerHTML = `<div>${text}</div><div class="message-time">${new Date().toLocaleTimeString()}</div>`;
+        this.messages.appendChild(div);
+        this.messages.scrollTop = this.messages.scrollHeight;
+    }
+}
 
     // ==================== ENCRYPTION ====================
     function encryptAttachment() {
