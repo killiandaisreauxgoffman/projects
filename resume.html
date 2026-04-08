@@ -1507,44 +1507,39 @@ class TelnyxWebPhone {
         this.callBtn.disabled = true;
         this.hangupBtn.disabled = true;
         
-        // Create SIP user agent (v0.15.11 uses SIP.UA)
         const config = {
             uri: `sip:${TELNYX_CREDENTIALS.username}@${TELNYX_CREDENTIALS.domain}`,
             wsServers: [TELNYX_CREDENTIALS.sipServer],
             authorizationUser: TELNYX_CREDENTIALS.username,
             password: TELNYX_CREDENTIALS.password,
+            realm: TELNYX_CREDENTIALS.domain,
+            register: true,
             traceSip: true,
-            register: true
+            hackWssInTransport: true,
+            media: {
+                constraints: { audio: true, video: false }
+            }
         };
         
         try {
             this.ua = new SIP.UA(config);
             
-            // Registration success
             this.ua.on('registered', () => {
                 this.updateStatus('Registered', 'ready');
                 this.callBtn.disabled = false;
                 this.isRegistered = true;
-                showNotification('SIP Ready', 'Connected to Telnyx SIP server', 3000);
+                showNotification('SIP Ready', 'Connected to Telnyx', 3000);
             });
             
-            // Registration failed
             this.ua.on('registrationFailed', (e) => {
-                console.error('SIP registration failed:', e);
+                console.error('Registration failed:', e);
                 this.updateStatus('Registration Failed', 'error');
-                showNotification('SIP Error', 'Could not register. Check credentials.', 5000);
+                showNotification('SIP Error', '403 Forbidden – check credentials', 8000);
             });
             
-            // Incoming call
-            this.ua.on('invite', (session) => {
-                this.handleIncomingCall(session);
-            });
+            this.ua.on('invite', (session) => this.handleIncomingCall(session));
             
-            // General connection status
-            this.ua.on('connected', () => {
-                console.log('WebSocket connected');
-            });
-            
+            this.ua.on('connected', () => console.log('WebSocket connected'));
             this.ua.on('disconnected', () => {
                 this.updateStatus('Disconnected', 'error');
                 this.isRegistered = false;
@@ -1552,55 +1547,31 @@ class TelnyxWebPhone {
             });
             
             this.ua.start();
-            
         } catch (e) {
             console.error('SIP init error:', e);
             this.updateStatus('Init Error', 'error');
         }
         
-        // Button listeners
-        this.callBtn.addEventListener('click', () => {
-            if (!this.isInCall) {
-                this.makeCall();
-            } else {
-                this.endCall();
-            }
-        });
-        
+        this.callBtn.addEventListener('click', () => this.isInCall ? this.endCall() : this.makeCall());
         this.hangupBtn.addEventListener('click', () => this.endCall());
     }
     
     makeCall() {
         const number = this.numberInput.value.trim();
-        if (!number) {
-            showNotification('Error', 'Please enter a phone number');
-            return;
-        }
-        
-        if (!this.ua || !this.isRegistered) {
-            showNotification('Error', 'Phone not registered');
-            return;
-        }
+        if (!number) return showNotification('Error', 'Enter a phone number');
+        if (!this.ua || !this.isRegistered) return showNotification('Error', 'Phone not registered');
         
         const target = number.includes('@') ? number : `sip:${number}@${TELNYX_CREDENTIALS.domain}`;
-        
         this.updateStatus('Calling...', 'connecting');
         this.callBtn.disabled = true;
+        this.ringback.play().catch(e => {});
         
-        // Play ringback
-        this.ringback.currentTime = 0;
-        this.ringback.play().catch(e => console.log('Ringback error:', e));
-        
-        // Make call (v0.15.11 uses ua.invite)
         const session = this.ua.invite(target, {
             media: {
                 constraints: { audio: true, video: false },
-                render: {
-                    remote: this.audioElement
-                }
+                render: { remote: this.audioElement }
             }
         });
-        
         this.session = session;
         
         session.on('accepted', () => {
@@ -1609,8 +1580,7 @@ class TelnyxWebPhone {
             this.updateStatus('In Call', 'in-call');
             this.isInCall = true;
             this.callBtn.textContent = 'Hang Up';
-            this.callBtn.classList.remove('call');
-            this.callBtn.classList.add('hangup');
+            this.callBtn.classList.replace('call', 'hangup');
             this.callBtn.disabled = false;
             this.hangupBtn.disabled = false;
         });
@@ -1621,56 +1591,36 @@ class TelnyxWebPhone {
             showNotification('Call Failed', 'Could not establish call', 3000);
         });
         
-        session.on('bye', () => {
-            this.cleanupCall();
-        });
-        
-        session.on('terminated', () => {
-            this.cleanupCall();
-        });
+        session.on('bye', () => this.cleanupCall());
+        session.on('terminated', () => this.cleanupCall());
     }
     
     handleIncomingCall(session) {
         this.ringback.pause();
         this.updateStatus('Incoming Call', 'incoming');
         showNotification('Incoming Call', `Call from ${session.remoteIdentity.uri.user}`, 10000);
-        
-        // Auto-answer for demo
         session.accept({
             media: {
                 constraints: { audio: true, video: false },
-                render: {
-                    remote: this.audioElement
-                }
+                render: { remote: this.audioElement }
             }
         });
-        
         this.session = session;
-        
         session.on('accepted', () => {
             this.updateStatus('In Call', 'in-call');
             this.isInCall = true;
             this.callBtn.textContent = 'Hang Up';
-            this.callBtn.classList.remove('call');
-            this.callBtn.classList.add('hangup');
+            this.callBtn.classList.replace('call', 'hangup');
             this.callBtn.disabled = false;
             this.hangupBtn.disabled = false;
         });
-        
-        session.on('bye', () => {
-            this.cleanupCall();
-        });
-        
-        session.on('terminated', () => {
-            this.cleanupCall();
-        });
+        session.on('bye', () => this.cleanupCall());
+        session.on('terminated', () => this.cleanupCall());
     }
     
     endCall() {
-        if (this.session) {
-            this.session.terminate();
-            this.cleanupCall();
-        }
+        if (this.session) this.session.terminate();
+        this.cleanupCall();
     }
     
     cleanupCall() {
@@ -1679,8 +1629,7 @@ class TelnyxWebPhone {
         this.updateStatus(this.isRegistered ? 'Registered' : 'Ready', 'ready');
         this.isInCall = false;
         this.callBtn.textContent = 'Call';
-        this.callBtn.classList.remove('hangup');
-        this.callBtn.classList.add('call');
+        this.callBtn.classList.replace('hangup', 'call');
         this.callBtn.disabled = false;
         this.hangupBtn.disabled = true;
         this.session = null;
