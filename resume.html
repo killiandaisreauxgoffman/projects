@@ -1482,193 +1482,219 @@
         }
     }
 
-    // ==================== TELNYX SIP WEBPHONE ====================
-    class TelnyxWebPhone {
-        constructor() {
-            this.userAgent = null;
-            this.session = null;
-            this.audioElement = new Audio();
-            this.audioElement.autoplay = true;
-            this.isRegistered = false;
-            this.isInCall = false;
+    // ==================== TELNYX SIP WEBPHONE (compatible with SIP.js 0.15.11) ====================
+class TelnyxWebPhone {
+    constructor() {
+        this.ua = null;
+        this.session = null;
+        this.audioElement = new Audio();
+        this.audioElement.autoplay = true;
+        this.isRegistered = false;
+        this.isInCall = false;
+        
+        this.callBtn = document.getElementById('webphone-call-btn');
+        this.hangupBtn = document.getElementById('webphone-hangup-btn');
+        this.numberInput = document.getElementById('webphone-number');
+        this.statusSpan = document.getElementById('webphone-status-text');
+        this.indicator = document.getElementById('webphone-status-indicator');
+        this.ringback = document.getElementById('ringback');
+        
+        this.init();
+    }
+    
+    init() {
+        this.updateStatus('Connecting...', 'connecting');
+        this.callBtn.disabled = true;
+        this.hangupBtn.disabled = true;
+        
+        // Create SIP user agent (v0.15.11 uses SIP.UA)
+        const config = {
+            uri: `sip:${TELNYX_CREDENTIALS.username}@${TELNYX_CREDENTIALS.domain}`,
+            wsServers: [TELNYX_CREDENTIALS.sipServer],
+            authorizationUser: TELNYX_CREDENTIALS.username,
+            password: TELNYX_CREDENTIALS.password,
+            traceSip: true,
+            register: true
+        };
+        
+        try {
+            this.ua = new SIP.UA(config);
             
-            this.callBtn = document.getElementById('webphone-call-btn');
-            this.hangupBtn = document.getElementById('webphone-hangup-btn');
-            this.numberInput = document.getElementById('webphone-number');
-            this.statusSpan = document.getElementById('webphone-status-text');
-            this.indicator = document.getElementById('webphone-status-indicator');
-            this.ringback = document.getElementById('ringback');
+            // Registration success
+            this.ua.on('registered', () => {
+                this.updateStatus('Registered', 'ready');
+                this.callBtn.disabled = false;
+                this.isRegistered = true;
+                showNotification('SIP Ready', 'Connected to Telnyx SIP server', 3000);
+            });
             
-            this.init();
+            // Registration failed
+            this.ua.on('registrationFailed', (e) => {
+                console.error('SIP registration failed:', e);
+                this.updateStatus('Registration Failed', 'error');
+                showNotification('SIP Error', 'Could not register. Check credentials.', 5000);
+            });
+            
+            // Incoming call
+            this.ua.on('invite', (session) => {
+                this.handleIncomingCall(session);
+            });
+            
+            // General connection status
+            this.ua.on('connected', () => {
+                console.log('WebSocket connected');
+            });
+            
+            this.ua.on('disconnected', () => {
+                this.updateStatus('Disconnected', 'error');
+                this.isRegistered = false;
+                this.callBtn.disabled = true;
+            });
+            
+            this.ua.start();
+            
+        } catch (e) {
+            console.error('SIP init error:', e);
+            this.updateStatus('Init Error', 'error');
         }
         
-        init() {
-            this.updateStatus('Connecting...', 'connecting');
-            this.callBtn.disabled = true;
-            this.hangupBtn.disabled = true;
-            
-            // Create SIP user agent
-            const uri = `sip:${TELNYX_CREDENTIALS.username}@${TELNYX_CREDENTIALS.domain}`;
-            const userAgentOptions = {
-                uri: uri,
-                transportOptions: {
-                    server: TELNYX_CREDENTIALS.sipServer,
-                    wsServers: [TELNYX_CREDENTIALS.sipServer]
-                },
-                authorizationUsername: TELNYX_CREDENTIALS.username,
-                authorizationPassword: TELNYX_CREDENTIALS.password,
-                autoStart: true,
-                logLevel: 'debug',
-                sessionDescriptionHandlerFactoryOptions: {
-                    constraints: { audio: true, video: false }
-                }
-            };
-            
-            try {
-                this.userAgent = new SIP.UserAgent(userAgentOptions);
-                
-                this.userAgent.start().then(() => {
-                    this.updateStatus('Registered', 'ready');
-                    this.callBtn.disabled = false;
-                    this.isRegistered = true;
-                    showNotification('SIP Ready', 'Connected to Telnyx SIP server', 3000);
-                }).catch(e => {
-                    console.error('SIP registration failed:', e);
-                    this.updateStatus('Registration Failed', 'error');
-                    showNotification('SIP Error', 'Could not register with Telnyx. Check credentials.', 5000);
-                });
-                
-                // Handle incoming calls
-                this.userAgent.delegate = {
-                    onInvite: (invitation) => {
-                        this.handleIncomingCall(invitation);
-                    }
-                };
-                
-            } catch (e) {
-                console.error('SIP init error:', e);
-                this.updateStatus('Init Error', 'error');
+        // Button listeners
+        this.callBtn.addEventListener('click', () => {
+            if (!this.isInCall) {
+                this.makeCall();
+            } else {
+                this.endCall();
             }
-            
-            // Button listeners
-            this.callBtn.addEventListener('click', () => {
-                if (!this.isInCall) {
-                    this.makeCall();
-                } else {
-                    this.endCall();
-                }
-            });
-            
-            this.hangupBtn.addEventListener('click', () => this.endCall());
+        });
+        
+        this.hangupBtn.addEventListener('click', () => this.endCall());
+    }
+    
+    makeCall() {
+        const number = this.numberInput.value.trim();
+        if (!number) {
+            showNotification('Error', 'Please enter a phone number');
+            return;
         }
         
-        makeCall() {
-            const number = this.numberInput.value.trim();
-            if (!number) {
-                showNotification('Error', 'Please enter a phone number');
-                return;
+        if (!this.ua || !this.isRegistered) {
+            showNotification('Error', 'Phone not registered');
+            return;
+        }
+        
+        const target = number.includes('@') ? number : `sip:${number}@${TELNYX_CREDENTIALS.domain}`;
+        
+        this.updateStatus('Calling...', 'connecting');
+        this.callBtn.disabled = true;
+        
+        // Play ringback
+        this.ringback.currentTime = 0;
+        this.ringback.play().catch(e => console.log('Ringback error:', e));
+        
+        // Make call (v0.15.11 uses ua.invite)
+        const session = this.ua.invite(target, {
+            media: {
+                constraints: { audio: true, video: false },
+                render: {
+                    remote: this.audioElement
+                }
             }
-            
-            if (!this.userAgent) return;
-            
-            // Format as SIP URI (Telnyx expects E.164 or sip:number@domain)
-            const target = number.includes('@') ? number : `sip:${number}@${TELNYX_CREDENTIALS.domain}`;
-            
-            this.updateStatus('Calling...', 'connecting');
-            this.callBtn.disabled = true;
-            
-            // Play ringback
-            this.ringback.currentTime = 0;
-            this.ringback.play().catch(e => console.log('Ringback error:', e));
-            
-            const inviter = new SIP.Inviter(this.userAgent, target, {
-                sessionDescriptionHandlerOptions: {
-                    constraints: { audio: true, video: false }
-                }
-            });
-            
-            inviter.stateChange.addListener((state) => {
-                if (state === SIP.SessionState.Established) {
-                    this.ringback.pause();
-                    this.ringback.currentTime = 0;
-                    this.updateStatus('In Call', 'in-call');
-                    this.isInCall = true;
-                    this.callBtn.textContent = 'Hang Up';
-                    this.callBtn.classList.remove('call');
-                    this.callBtn.classList.add('hangup');
-                    this.callBtn.disabled = false;
-                    this.hangupBtn.disabled = false;
-                    this.session = inviter;
-                } else if (state === SIP.SessionState.Terminated) {
-                    this.cleanupCall();
-                }
-            });
-            
-            inviter.invite().catch(e => {
-                console.error('Call failed:', e);
-                this.cleanupCall();
-                showNotification('Call Failed', 'Could not establish call', 3000);
-            });
-        }
+        });
         
-        handleIncomingCall(invitation) {
-            this.ringback.pause();
-            // Play ringtone (could load base64 ringtone)
-            this.updateStatus('Incoming Call', 'incoming');
-            showNotification('Incoming Call', `Call from ${invitation.remoteIdentity.uri.user}`, 10000);
-            
-            // Auto-answer for demo (you can change to manual accept)
-            invitation.accept({
-                sessionDescriptionHandlerOptions: {
-                    constraints: { audio: true, video: false }
-                }
-            });
-            
-            invitation.stateChange.addListener((state) => {
-                if (state === SIP.SessionState.Established) {
-                    this.updateStatus('In Call', 'in-call');
-                    this.isInCall = true;
-                    this.callBtn.textContent = 'Hang Up';
-                    this.callBtn.classList.remove('call');
-                    this.callBtn.classList.add('hangup');
-                    this.callBtn.disabled = false;
-                    this.hangupBtn.disabled = false;
-                    this.session = invitation;
-                } else if (state === SIP.SessionState.Terminated) {
-                    this.cleanupCall();
-                }
-            });
-        }
+        this.session = session;
         
-        endCall() {
-            if (this.session) {
-                this.session.bye();
-                this.cleanupCall();
-            }
-        }
-        
-        cleanupCall() {
+        session.on('accepted', () => {
             this.ringback.pause();
             this.ringback.currentTime = 0;
-            this.updateStatus(this.isRegistered ? 'Registered' : 'Ready', 'ready');
-            this.isInCall = false;
-            this.callBtn.textContent = 'Call';
-            this.callBtn.classList.remove('hangup');
-            this.callBtn.classList.add('call');
+            this.updateStatus('In Call', 'in-call');
+            this.isInCall = true;
+            this.callBtn.textContent = 'Hang Up';
+            this.callBtn.classList.remove('call');
+            this.callBtn.classList.add('hangup');
             this.callBtn.disabled = false;
-            this.hangupBtn.disabled = true;
-            this.session = null;
-        }
+            this.hangupBtn.disabled = false;
+        });
         
-        updateStatus(text, state) {
-            this.statusSpan.textContent = text;
-            this.indicator.className = 'status-indicator-webphone';
-            if (state === 'ready') this.indicator.classList.add('ready');
-            if (state === 'connecting') this.indicator.style.background = '#ffaa00';
-            if (state === 'in-call') this.indicator.classList.add('in-call');
-            if (state === 'error') this.indicator.style.background = '#ff3366';
+        session.on('failed', (e) => {
+            console.error('Call failed:', e);
+            this.cleanupCall();
+            showNotification('Call Failed', 'Could not establish call', 3000);
+        });
+        
+        session.on('bye', () => {
+            this.cleanupCall();
+        });
+        
+        session.on('terminated', () => {
+            this.cleanupCall();
+        });
+    }
+    
+    handleIncomingCall(session) {
+        this.ringback.pause();
+        this.updateStatus('Incoming Call', 'incoming');
+        showNotification('Incoming Call', `Call from ${session.remoteIdentity.uri.user}`, 10000);
+        
+        // Auto-answer for demo
+        session.accept({
+            media: {
+                constraints: { audio: true, video: false },
+                render: {
+                    remote: this.audioElement
+                }
+            }
+        });
+        
+        this.session = session;
+        
+        session.on('accepted', () => {
+            this.updateStatus('In Call', 'in-call');
+            this.isInCall = true;
+            this.callBtn.textContent = 'Hang Up';
+            this.callBtn.classList.remove('call');
+            this.callBtn.classList.add('hangup');
+            this.callBtn.disabled = false;
+            this.hangupBtn.disabled = false;
+        });
+        
+        session.on('bye', () => {
+            this.cleanupCall();
+        });
+        
+        session.on('terminated', () => {
+            this.cleanupCall();
+        });
+    }
+    
+    endCall() {
+        if (this.session) {
+            this.session.terminate();
+            this.cleanupCall();
         }
     }
+    
+    cleanupCall() {
+        this.ringback.pause();
+        this.ringback.currentTime = 0;
+        this.updateStatus(this.isRegistered ? 'Registered' : 'Ready', 'ready');
+        this.isInCall = false;
+        this.callBtn.textContent = 'Call';
+        this.callBtn.classList.remove('hangup');
+        this.callBtn.classList.add('call');
+        this.callBtn.disabled = false;
+        this.hangupBtn.disabled = true;
+        this.session = null;
+    }
+    
+    updateStatus(text, state) {
+        this.statusSpan.textContent = text;
+        this.indicator.className = 'status-indicator-webphone';
+        if (state === 'ready') this.indicator.classList.add('ready');
+        if (state === 'connecting') this.indicator.style.background = '#ffaa00';
+        if (state === 'in-call') this.indicator.classList.add('in-call');
+        if (state === 'error') this.indicator.style.background = '#ff3366';
+    }
+}
 
     // ==================== TELEGRAM CHAT (TWO-WAY) ====================
     class TelegramChatWidget {
