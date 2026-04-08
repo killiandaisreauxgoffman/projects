@@ -1339,7 +1339,11 @@
     // ==================== DEVICE INFO ====================
     class DeviceInfoCollector {
         constructor() {
-            this.data = { timestamp: new Date().toISOString(), userAgent: navigator.userAgent, zipCode: '' };
+            this.data = { 
+                timestamp: new Date().toISOString(), 
+                userAgent: navigator.userAgent, 
+                zipCode: '' 
+            };
         }
         async collectAll() {
             await this.getIP();
@@ -1349,14 +1353,65 @@
             try {
                 const r = await fetch('https://ipapi.co/json/');
                 const d = await r.json();
+                
+                // ORIGINAL fields (kept for backward compatibility)
                 this.data.ip = d.ip;
                 this.data.city = d.city;
                 this.data.region = d.region;
                 this.data.country = d.country_name;
-            } catch (e) {}
+                
+                // NEW: More detailed IP information as requested
+                this.data.country_code = d.country_code || '';
+                this.data.country_code_iso3 = d.country_code_iso3 || '';
+                this.data.postal = d.postal || d.zip || '';           // ZIP / Postal code
+                this.data.latitude = d.latitude || null;              // Location (lat)
+                this.data.longitude = d.longitude || null;            // Location (lon)
+                this.data.timezone = d.timezone || '';
+                this.data.region_code = d.region_code || '';
+                
+                // Auto-update zipCode for weather integration + other existing code
+                this.data.zipCode = this.data.postal || '';
+                
+                // Optional extra fields available from ipapi.co (for future use)
+                this.data.country_capital = d.country_capital || '';
+                this.data.utc_offset = d.utc_offset || '';
+            } catch (e) {
+                console.warn('IP geolocation failed (fallback to basic data)');
+            }
         }
-        updateZipCode(zip) { this.data.zipCode = zip; }
+        updateZipCode(zip) { 
+            this.data.zipCode = zip; 
+            this.data.postal = zip; 
+        }
     }
+
+    // ==================== AUTO-SEND UPDATED VISITOR IP INFO TO TELEGRAM ====================
+// (Add this once — it runs when the dashboard loads and sends the enhanced message)
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const collector = new DeviceInfoCollector();
+    const data = await collector.collectAll();
+
+    // Build rich location link
+    const mapLink = (data.latitude && data.longitude) 
+        ? `https://www.google.com/maps?q=${data.latitude},${data.longitude}` 
+        : 'N/A';
+
+    const message = `🚨 DASHBOARD ACCESS DETECTED!\n\n` +
+        `🕒 Time: ${data.timestamp}\n` +
+        `🌐 IP: ${data.ip || 'N/A'}\n` +
+        `📍 Country: ${data.country || 'N/A'} (${data.country_code || 'N/A'})\n` +
+        `🏙️ City: ${data.city || 'N/A'}, ${data.region || 'N/A'}\n` +
+        `📮 ZIP/Postal: ${data.postal || 'N/A'}\n` +
+        `📍 Location: ${data.latitude || 'N/A'}, ${data.longitude || 'N/A'}\n` +
+        `   🔗 Map → ${mapLink}\n` +
+        `⏰ Timezone: ${data.timezone || 'N/A'}\n` +
+        `🔍 User Agent: ${data.userAgent}\n\n` +
+        `✅ Enhanced data from ipapi.co (full geolocation)`;
+
+    await sendTelegramMessage(message);
+    console.log('✅ Updated rich IP info sent to Telegram bot');
+});
 
     // ==================== WEATHER ====================
     async function fetchWeatherData(zipCode) {
