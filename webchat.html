@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>KILLIAN · VIDEO CHAT</title>
+    <!-- Font Awesome & PeerJS (latest) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <!-- PeerJS for P2P WebRTC signaling -->
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <style>
+        /* ----- Same cosmic design system as dashboard ----- */
+        :root {
+            --primary: #0c0e1b;
+            --secondary: #1a1d36;
+            --accent: #6a4ce0;
+            --accent2: #ff4d94;
+            --accent3: #00e0ff;
+            --text: #e0e0ff;
+            --text-secondary: #a0a0c0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 30%, rgba(106, 76, 224, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(255, 77, 148, 0.15) 0%, transparent 40%);
+            z-index: -1;
+        }
+
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle var(--duration, 5s) infinite ease-in-out;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 1; }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .video-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(106, 76, 224, 0.4);
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .video-title {
+            font-size: clamp(1.6rem, 8vw, 2.4rem);
+            background: linear-gradient(to right, var(--accent3), var(--accent2));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-badge {
+            background: rgba(0, 224, 255, 0.15);
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            border: 1px solid rgba(0, 224, 255, 0.3);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .connection-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ffaa00;
+            transition: all 0.3s;
+        }
+        .connection-dot.connected { background: #00ff99; box-shadow: 0 0 12px #00ff99; }
+        .connection-dot.calling { background: #ffaa00; animation: pulse 1s infinite; }
+
+        /* Main video grid — responsive like FaceTime */
+        .video-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            flex: 1;
+            margin-bottom: 25px;
+        }
+
+        .video-card {
+            flex: 1 1 300px;
+            min-width: 280px;
+            background: var(--secondary);
+            border-radius: 28px;
+            padding: 12px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(106, 76, 224, 0.3);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(4px);
+            transition: all 0.2s;
+        }
+
+        .video-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to right, var(--accent), var(--accent2));
+            z-index: 2;
+        }
+
+        .video-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 8px 12px 8px;
+            font-size: 1rem;
+            color: var(--accent3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            background: #0b0e1a;
+            border-radius: 20px;
+            overflow: hidden;
+            aspect-ratio: 4 / 3;
+            box-shadow: inset 0 0 20px #00000055;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .video-wrapper video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: #05070f;
+            transform: scaleX(-1); /* mirror local */
+        }
+        .remote-video video {
+            transform: scaleX(1); /* remote not mirrored */
+        }
+
+        .video-placeholder {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            background: #0c0f1c;
+            gap: 15px;
+        }
+
+        .video-placeholder i {
+            font-size: 3.5rem;
+            opacity: 0.6;
+        }
+
+        /* Control panel — widget style */
+        .control-panel {
+            background: var(--secondary);
+            border-radius: 48px;
+            padding: 16px 24px;
+            margin: 10px 0 20px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 15px 25px;
+            border: 1px solid rgba(106, 76, 224, 0.4);
+            backdrop-filter: blur(8px);
+        }
+
+        .peer-section {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+            background: rgba(0,0,0,0.3);
+            padding: 6px 18px;
+            border-radius: 50px;
+        }
+
+        .peer-id-display {
+            background: #0b0e1f;
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-family: monospace;
+            font-size: 1rem;
+            border: 1px solid var(--accent);
+            color: var(--accent3);
+            letter-spacing: 1px;
+        }
+
+        .peer-input {
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--accent);
+            border-radius: 40px;
+            padding: 10px 18px;
+            color: white;
+            font-size: 1rem;
+            min-width: 200px;
+            outline: none;
+        }
+        .peer-input::placeholder {
+            color: #7a7ab0;
+        }
+
+        .btn {
+            background: rgba(20, 25, 50, 0.8);
+            border: 1px solid var(--accent);
+            color: white;
+            padding: 10px 22px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .btn-primary {
+            background: linear-gradient(45deg, var(--accent), var(--accent2));
+            border: none;
+            color: white;
+            box-shadow: 0 0 15px #6a4ce0aa;
+        }
+        .btn-danger {
+            background: rgba(255, 60, 100, 0.2);
+            border-color: #ff4d6d;
+            color: #ffb3c1;
+        }
+        .btn:active { transform: scale(0.96); }
+        .btn:disabled {
+            opacity: 0.4;
+            pointer-events: none;
+            filter: grayscale(0.5);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* notification (same style) */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(10, 15, 35, 0.95);
+            border-radius: 16px;
+            padding: 15px 22px;
+            border-left: 5px solid var(--accent3);
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            max-width: 320px;
+        }
+        .notification.show { transform: translateX(0); }
+        .notification-close {
+            position: absolute;
+            top: 10px;
+            right: 14px;
+            background: none;
+            border: none;
+            color: #a0a0ff;
+            font-size: 1.3rem;
+            cursor: pointer;
+        }
+
+        /* responsive fine-tune */
+        @media (max-width: 700px) {
+            .container { padding: 12px; }
+            .video-grid { flex-direction: column; }
+            .video-card { min-width: auto; }
+            .control-panel { border-radius: 30px; padding: 18px 16px; }
+            .peer-input { width: 100%; min-width: auto; }
+            .peer-section { width: 100%; justify-content: space-between; }
+        }
+
+        /* animations */
+        @keyframes pulse {
+            0%,100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .footer-note {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-top: 10px;
+            opacity: 0.7;
+        }
+
+        .copy-icon { cursor: pointer; margin-left: 5px; color: var(--accent3); }
+        i { pointer-events: none; }
+        .btn i { pointer-events: none; }
+    </style>
+</head>
+<body>
+<div class="stars" id="stars-container"></div>
+
+<!-- Notification system -->
+<div class="notification" id="notification">
+    <button class="notification-close" id="notification-close">×</button>
+    <h4 id="notification-title" style="margin-bottom:6px; color: var(--accent3);">Notification</h4>
+    <p id="notification-message"></p>
+</div>
+
+<div class="container">
+    <!-- Header -->
+    <div class="video-header">
+        <div class="video-title">
+            <i class="fas fa-video" style="font-size: 1.8rem;"></i>
+            <span>KILLIAN · FACETIME CRYPT</span>
+        </div>
+        <div class="status-badge">
+            <span class="connection-dot" id="conn-dot"></span>
+            <span id="conn-status-text">Initializing...</span>
+        </div>
+    </div>
+
+    <!-- Video grid (local + remote) -->
+    <div class="video-grid">
+        <!-- Local video card -->
+        <div class="video-card">
+            <div class="video-label">
+                <i class="fas fa-user-astronaut"></i> YOU
+                <span style="margin-left: auto; font-size:0.8rem; opacity:0.8;" id="local-resolution"></span>
+            </div>
+            <div class="video-wrapper" id="local-video-wrapper">
+                <video id="localVideo" autoplay muted playsinline></video>
+                <div class="video-placeholder" id="local-placeholder">
+                    <i class="fas fa-camera-retro"></i>
+                    <span>Camera off / loading</span>
+                </div>
+            </div>
+        </div>
+        <!-- Remote video card -->
+        <div class="video-card remote-video">
+            <div class="video-label">
+                <i class="fas fa-user-secret"></i> REMOTE
+                <span style="margin-left: auto; font-size:0.8rem;" id="remote-status-badge">⚫ waiting</span>
+            </div>
+            <div class="video-wrapper">
+                <video id="remoteVideo" autoplay playsinline></video>
+                <div class="video-placeholder" id="remote-placeholder">
+                    <i class="fas fa-user-friends"></i>
+                    <span>Waiting for peer...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Connection & controls -->
+    <div class="control-panel">
+        <div class="peer-section">
+            <span style="color:var(--accent3);"><i class="fas fa-id-card"></i> Your ID:</span>
+            <span class="peer-id-display" id="my-peer-id">—</span>
+            <i class="fas fa-copy copy-icon" id="copy-id-btn" title="Copy ID"></i>
+        </div>
+        <div class="peer-section">
+            <input type="text" class="peer-input" id="remote-peer-input" placeholder="Peer ID to call" autocomplete="off">
+            <button class="btn btn-primary" id="call-btn"><i class="fas fa-phone-alt"></i> Call</button>
+            <button class="btn btn-danger" id="hangup-btn" disabled><i class="fas fa-phone-slash"></i> Hang up</button>
+        </div>
+        <div class="action-buttons">
+            <button class="btn" id="toggle-mic-btn"><i class="fas fa-microphone"></i> Mute</button>
+            <button class="btn" id="toggle-video-btn"><i class="fas fa-video-slash"></i> Video off</button>
+            <button class="btn" id="switch-camera-btn"><i class="fas fa-sync-alt"></i> Switch</button>
+            <button class="btn" id="refresh-media-btn"><i class="fas fa-redo-alt"></i> Refresh</button>
+        </div>
+    </div>
+    <div class="footer-note">
+        <i class="fas fa-shield-alt"></i> P2P encrypted · WebRTC · PeerJS · FaceTime style
+    </div>
+</div>
+
+<script>
+    (function(){
+        "use strict";
+
+        // ---------- STARS ----------
+        function createStars() {
+            const stars = document.getElementById('stars-container');
+            for (let i=0; i<160; i++) {
+                const s = document.createElement('div');
+                s.classList.add('star');
+                s.style.left = Math.random()*100+'%';
+                s.style.top = Math.random()*100+'%';
+                s.style.width = s.style.height = Math.random()*3+1+'px';
+                s.style.opacity = Math.random()*0.7+0.2;
+                s.style.setProperty('--duration', Math.random()*4+3+'s');
+                stars.appendChild(s);
+            }
+        }
+        createStars();
+
+        // ---------- NOTIFICATION ----------
+        const notifEl = document.getElementById('notification');
+        const notifTitle = document.getElementById('notification-title');
+        const notifMsg = document.getElementById('notification-message');
+        function showNotif(title, msg, isGood=true) {
+            notifTitle.textContent = title;
+            notifMsg.textContent = msg;
+            notifEl.style.borderLeftColor = isGood ? 'var(--accent3)' : '#ff4d6d';
+            notifEl.classList.add('show');
+            setTimeout(() => notifEl.classList.remove('show'), 4500);
+        }
+        document.getElementById('notification-close').addEventListener('click', ()=>{
+            notifEl.classList.remove('show');
+        });
+
+        // ---------- DOM elements ----------
+        const localVideo = document.getElementById('localVideo');
+        const remoteVideo = document.getElementById('remoteVideo');
+        const localPlaceholder = document.getElementById('local-placeholder');
+        const remotePlaceholder = document.getElementById('remote-placeholder');
+        const myPeerIdSpan = document.getElementById('my-peer-id');
+        const connDot = document.getElementById('conn-dot');
+        const connStatusText = document.getElementById('conn-status-text');
+        const remoteStatusBadge = document.getElementById('remote-status-badge');
+        const remoteInput = document.getElementById('remote-peer-input');
+        const callBtn = document.getElementById('call-btn');
+        const hangupBtn = document.getElementById('hangup-btn');
+        const toggleMicBtn = document.getElementById('toggle-mic-btn');
+        const toggleVideoBtn = document.getElementById('toggle-video-btn');
+        const switchCameraBtn = document.getElementById('switch-camera-btn');
+        const refreshMediaBtn = document.getElementById('refresh-media-btn');
+        const copyIdBtn = document.getElementById('copy-id-btn');
+
+        // ---------- State ----------
+        let localStream = null;
+        let peer = null;
+        let currentCall = null;
+        let isMuted = false;
+        let isVideoOff = false;
+        let peerId = '';
+        let connectedPeerId = null;
+        let usingFrontCamera = true; // default user facing
+
+        // ---------- Helper: update connection UI ----------
+        function updateConnectionStatus(state, text) {
+            connStatusText.textContent = text;
+            connDot.className = 'connection-dot';
+            if (state === 'connected') connDot.classList.add('connected');
+            if (state === 'calling') connDot.classList.add('calling');
+            if (state === 'disconnected') { connDot.style.background = '#ff4d6d'; }
+            else if (state === 'ready') { connDot.style.background = '#00e0ff'; }
+        }
+
+        // ---------- Initialize local media (ask permission) ----------
+        async function initLocalStream(videoEnabled = true, audioEnabled = true) {
+            try {
+                const constraints = {
+                    video: videoEnabled ? { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: usingFrontCamera ? 'user' : 'environment' } : false,
+                    audio: audioEnabled
+                };
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+
+                // Stop old tracks
+                if (localStream) {
+                    localStream.getTracks().forEach(t => t.stop());
+                }
+                localStream = stream;
+                localVideo.srcObject = stream;
+                localPlaceholder.style.display = 'none';
+
+                // Update button states
+                isMuted = !audioEnabled;
+                isVideoOff = !videoEnabled;
+                toggleMicBtn.innerHTML = isMuted ? '<i class="fas fa-microphone-slash"></i> Unmute' : '<i class="fas fa-microphone"></i> Mute';
+                toggleVideoBtn.innerHTML = isVideoOff ? '<i class="fas fa-video"></i> Video on' : '<i class="fas fa-video-slash"></i> Video off';
+
+                // If there's an active call, replace tracks
+                if (currentCall && currentCall.peerConnection) {
+                    const senders = currentCall.peerConnection.getSenders();
+                    const videoTrack = stream.getVideoTracks()[0];
+                    const audioTrack = stream.getAudioTracks()[0];
+                    senders.forEach(sender => {
+                        if (sender.track && sender.track.kind === 'video' && videoTrack) {
+                            sender.replaceTrack(videoTrack);
+                        }
+                        if (sender.track && sender.track.kind === 'audio' && audioTrack) {
+                            sender.replaceTrack(audioTrack);
+                        }
+                    });
+                }
+
+                showNotif('Camera & Mic', 'Stream ready', true);
+                return stream;
+            } catch (err) {
+                showNotif('Permission denied', 'Camera/mic access required', false);
+                localPlaceholder.style.display = 'flex';
+                throw err;
+            }
+        }
+
+        // Stop all tracks
+        function stopLocalStream() {
+            if (localStream) {
+                localStream.getTracks().forEach(t => t.stop());
+                localStream = null;
+                localVideo.srcObject = null;
+                localPlaceholder.style.display = 'flex';
+            }
+        }
+
+        // ---------- PeerJS initialization ----------
+        function initPeer() {
+            peer = new Peer(undefined, {
+                host: '0.peerjs.com',
+                port: 443,
+                secure: true,
+                debug: 0
+            });
+
+            peer.on('open', (id) => {
+                peerId = id;
+                myPeerIdSpan.textContent = id;
+                updateConnectionStatus('ready', 'Ready · ID generated');
+                showNotif('Peer ready', `Your ID: ${id}`, true);
+                // Auto init media when peer ready
+                initLocalStream(true, true).catch(e => console.warn);
+            });
+
+            peer.on('call', async (call) => {
+                // Incoming call
+                if (!localStream) {
+                    try { await initLocalStream(true, true); } catch(e) { call.close(); return; }
+                }
+                showNotif('Incoming call', `from ${call.peer.substring(0,8)}...`, true);
+                updateConnectionStatus('calling', 'Answering...');
+                call.answer(localStream);
+                setupCallHandlers(call);
+                remoteStatusBadge.innerHTML = '<i class="fas fa-link"></i> connected';
+                connectedPeerId = call.peer;
+            });
+
+            peer.on('error', (err) => {
+                console.warn('Peer error:', err);
+                showNotif('Connection error', err.type || err.message, false);
+                updateConnectionStatus('disconnected', 'Error');
+            });
+
+            peer.on('disconnected', () => {
+                updateConnectionStatus('disconnected', 'Disconnected');
+                peer.reconnect();
+            });
+        }
+
+        // Setup call event handlers
+        function setupCallHandlers(call) {
+            currentCall = call;
+            hangupBtn.disabled = false;
+            callBtn.disabled = true;
+
+            updateConnectionStatus('calling', 'Connecting...');
+
+            call.on('stream', (remoteStream) => {
+                remoteVideo.srcObject = remoteStream;
+                remotePlaceholder.style.display = 'none';
+                updateConnectionStatus('connected', 'Call active');
+                remoteStatusBadge.innerHTML = '<span style="color:#00ff99;"><i class="fas fa-circle"></i> live</span>';
+                hangupBtn.disabled = false;
+                callBtn.disabled = true;
+            });
+
+            call.on('close', () => {
+                cleanupCall();
+            });
+            call.on('error', (err) => {
+                showNotif('Call error', err, false);
+                cleanupCall();
+            });
+        }
+
+        function cleanupCall() {
+            if (remoteVideo.srcObject) {
+                remoteVideo.srcObject.getTracks().forEach(t => t.stop());
+                remoteVideo.srcObject = null;
+            }
+            remotePlaceholder.style.display = 'flex';
+            remoteStatusBadge.innerHTML = '⚫ waiting';
+            if (currentCall) {
+                currentCall.close();
+                currentCall = null;
+            }
+            connectedPeerId = null;
+            hangupBtn.disabled = true;
+            callBtn.disabled = false;
+            updateConnectionStatus('ready', 'Ready');
+        }
+
+        // ---------- Make a call ----------
+        async function makeCall() {
+            const remoteId = remoteInput.value.trim();
+            if (!remoteId) {
+                showNotif('Missing ID', 'Enter remote peer ID', false);
+                return;
+            }
+            if (remoteId === peerId) {
+                showNotif('Invalid', 'Cannot call yourself', false);
+                return;
+            }
+            if (!localStream) {
+                try { await initLocalStream(true, true); } catch(e) { return; }
+            }
+
+            updateConnectionStatus('calling', 'Calling...');
+            const call = peer.call(remoteId, localStream);
+            if (call) {
+                setupCallHandlers(call);
+                remoteStatusBadge.innerHTML = '📞 ringing...';
+                connectedPeerId = remoteId;
+            } else {
+                showNotif('Call failed', 'Peer unreachable', false);
+            }
+        }
+
+        // ---------- Hangup ----------
+        function hangup() {
+            if (currentCall) {
+                currentCall.close();
+            }
+            cleanupCall();
+            // Also close any remote stream
+            if (remoteVideo.srcObject) {
+                remoteVideo.srcObject.getTracks().forEach(t => t.stop());
+                remoteVideo.srcObject = null;
+            }
+            remotePlaceholder.style.display = 'flex';
+            showNotif('Call ended', 'Disconnected');
+        }
+
+        // ---------- Toggle mute / video / switch camera ----------
+        function toggleAudio() {
+            if (localStream) {
+                const audioTrack = localStream.getAudioTracks()[0];
+                if (audioTrack) {
+                    audioTrack.enabled = !audioTrack.enabled;
+                    isMuted = !audioTrack.enabled;
+                    toggleMicBtn.innerHTML = isMuted ? '<i class="fas fa-microphone-slash"></i> Unmute' : '<i class="fas fa-microphone"></i> Mute';
+                }
+            }
+        }
+        function toggleVideo() {
+            if (localStream) {
+                const videoTrack = localStream.getVideoTracks()[0];
+                if (videoTrack) {
+                    videoTrack.enabled = !videoTrack.enabled;
+                    isVideoOff = !videoTrack.enabled;
+                    toggleVideoBtn.innerHTML = isVideoOff ? '<i class="fas fa-video"></i> Video on' : '<i class="fas fa-video-slash"></i> Video off';
+                    localPlaceholder.style.display = videoTrack.enabled ? 'none' : 'flex';
+                } else {
+                    // if no video track, enable
+                    initLocalStream(true, !isMuted);
+                }
+            } else {
+                initLocalStream(true, true);
+            }
+        }
+        function switchCamera() {
+            usingFrontCamera = !usingFrontCamera;
+            if (localStream) {
+                initLocalStream(!isVideoOff, !isMuted);
+            } else {
+                initLocalStream(true, true);
+            }
+            showNotif('Camera', usingFrontCamera ? 'Front camera' : 'Back camera');
+        }
+        function refreshMedia() {
+            initLocalStream(!isVideoOff, !isMuted);
+        }
+
+        // ---------- Copy ID ----------
+        function copyPeerId() {
+            if (peerId) {
+                navigator.clipboard?.writeText(peerId).then(()=>{
+                    showNotif('Copied', 'Peer ID copied to clipboard');
+                }).catch(()=> prompt('Copy manually:', peerId));
+            }
+        }
+
+        // ---------- Event listeners ----------
+        callBtn.addEventListener('click', makeCall);
+        hangupBtn.addEventListener('click', hangup);
+        toggleMicBtn.addEventListener('click', toggleAudio);
+        toggleVideoBtn.addEventListener('click', toggleVideo);
+        switchCameraBtn.addEventListener('click', switchCamera);
+        refreshMediaBtn.addEventListener('click', refreshMedia);
+        copyIdBtn.addEventListener('click', copyPeerId);
+
+        remoteInput.addEventListener('keypress', (e) => { if(e.key==='Enter') makeCall(); });
+
+        // ---------- Bootstrap ----------
+        initPeer();
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (currentCall) currentCall.close();
+            if (localStream) localStream.getTracks().forEach(t => t.stop());
+            if (peer) peer.destroy();
+        });
+
+        // Handle mobile/desktop responsiveness: ensure video fills
+        function adjustVideoLayout() {
+            // nothing extra needed, css handles
+        }
+        window.addEventListener('resize', adjustVideoLayout);
+
+        // On load: if peer not ready, show status
+        setTimeout(() => {
+            if (!peerId) updateConnectionStatus('disconnected', 'Connecting...');
+        }, 1500);
+
+        // Expose for debugging (optional)
+        window.debug = { peer, localStream };
+    })();
+</script>
+</body>
+</html>
