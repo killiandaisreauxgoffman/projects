@@ -1294,7 +1294,7 @@
 
     // ==================== UTILITIES ====================
     function generatePassword() {
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%&*';
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         let pwd = '';
         for (let i = 0; i < 12; i++) pwd += chars[Math.floor(Math.random() * chars.length)];
         return pwd;
