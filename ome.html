@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>OmeTV · Remote Connection Monitor</title>
+    <title>OmeTV · Connection Monitor</title>
     <style>
         * {
             margin: 0;
@@ -107,17 +107,6 @@
             border-bottom: 1px solid #26303d;
             padding-bottom: 10px;
             margin-bottom: 4px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .info-panel h2 .count {
-            font-size: 0.7rem;
-            background: #1f2a36;
-            padding: 2px 10px;
-            border-radius: 20px;
-            color: #b6c8e0;
-            font-weight: 400;
         }
         .info-card {
             background: #1a232f;
@@ -131,7 +120,7 @@
             justify-content: space-between;
             padding: 8px 0;
             border-bottom: 1px solid #25303e;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
         .info-row:last-child {
             border-bottom: none;
@@ -151,10 +140,6 @@
             color: #7dd3fc;
             font-family: 'SF Mono', 'Fira Code', monospace;
         }
-        .value.remote-country {
-            color: #fcd34d;
-            font-weight: 600;
-        }
         .status-badge {
             display: inline-flex;
             align-items: center;
@@ -173,21 +158,6 @@
             background: #4ade80;
             display: inline-block;
         }
-        .status-badge .dot-yellow {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #facc15;
-            display: inline-block;
-        }
-        .status-badge .dot-red {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #f87171;
-            display: inline-block;
-        }
-
         .action-btn {
             background: #2a3a4e;
             border: none;
@@ -213,7 +183,6 @@
         .action-btn .icon {
             font-size: 1.1rem;
         }
-
         .footnote {
             font-size: 0.65rem;
             color: #6d7f96;
@@ -222,31 +191,23 @@
             border-top: 1px solid #202b38;
             padding-top: 12px;
         }
-
-        .remote-log {
-            max-height: 200px;
+        .stats-log {
+            max-height: 180px;
             overflow-y: auto;
             background: #0f161f;
             border-radius: 12px;
             padding: 8px 12px;
             border: 1px solid #25303e;
+            font-size: 0.7rem;
         }
-        .remote-log .log-entry {
-            display: flex;
-            justify-content: space-between;
-            padding: 6px 0;
+        .stats-log .entry {
+            padding: 4px 0;
             border-bottom: 1px solid #1a2533;
-            font-size: 0.75rem;
-        }
-        .remote-log .log-entry:last-child {
-            border-bottom: none;
-        }
-        .remote-log .log-entry .time {
-            color: #6d7f96;
-        }
-        .remote-log .log-entry .details {
+            font-family: 'SF Mono', 'Fira Code', monospace;
             color: #b9d0e8;
-            text-align: right;
+        }
+        .stats-log .entry:last-child {
+            border-bottom: none;
         }
 
         @media (max-width: 700px) {
@@ -292,13 +253,13 @@
             background: #3b5068;
             border-radius: 8px;
         }
-        .remote-log::-webkit-scrollbar {
+        .stats-log::-webkit-scrollbar {
             width: 3px;
         }
-        .remote-log::-webkit-scrollbar-track {
+        .stats-log::-webkit-scrollbar-track {
             background: #0a1018;
         }
-        .remote-log::-webkit-scrollbar-thumb {
+        .stats-log::-webkit-scrollbar-thumb {
             background: #2a3a4e;
             border-radius: 8px;
         }
@@ -306,7 +267,7 @@
 </head>
 <body>
     <div class="app-bar">
-        <h1>◈ OmeTV · Remote Monitor</h1>
+        <h1>◈ OmeTV · Monitor</h1>
         <div class="badge">
             <span class="dot"></span> Live
         </div>
@@ -314,19 +275,20 @@
 
     <div class="main-container">
         <div class="iframe-wrapper">
-            <iframe src="https://ome.tv/" allow="camera; microphone; display-capture; autoplay; encrypted-media" allowfullscreen></iframe>
+            <iframe id="omeIframe" src="https://ome.tv/" allow="camera; microphone; display-capture; autoplay; encrypted-media" allowfullscreen></iframe>
         </div>
 
         <div class="info-panel" id="infoPanel">
-            <h2>
-                🌐 Remote Connection
-                <span class="count" id="connectionCount">0</span>
-            </h2>
+            <h2>🔍 Connection Details</h2>
             
-            <div class="info-card" id="remoteInfo">
+            <div class="info-card" id="connectionInfo">
+                <div class="info-row">
+                    <span class="label">📡 Remote IP</span>
+                    <span class="value highlight" id="remoteIP">—</span>
+                </div>
                 <div class="info-row">
                     <span class="label">🌍 Country</span>
-                    <span class="value remote-country" id="remoteCountry">—</span>
+                    <span class="value" id="remoteCountry">—</span>
                 </div>
                 <div class="info-row">
                     <span class="label">🏙️ City</span>
@@ -337,51 +299,41 @@
                     <span class="value" id="remoteRegion">—</span>
                 </div>
                 <div class="info-row">
-                    <span class="label">🌐 Timezone</span>
-                    <span class="value" id="remoteTimezone">—</span>
+                    <span class="label">📶 Connection Type</span>
+                    <span class="value" id="connectionType">—</span>
                 </div>
                 <div class="info-row">
-                    <span class="label">📡 ISP</span>
-                    <span class="value" id="remoteISP">—</span>
-                </div>
-                <div class="info-row">
-                    <span class="label">📶 Connection</span>
-                    <span class="value" id="remoteQuality">—</span>
-                </div>
-                <div class="info-row">
-                    <span class="label">🕒 Connected</span>
-                    <span class="value" id="remoteTime">—</span>
+                    <span class="label">⚡ RTT (ms)</span>
+                    <span class="value" id="rttDisplay">—</span>
                 </div>
             </div>
 
             <div style="display: flex; gap: 6px; flex-wrap: wrap;">
                 <div class="status-badge">
-                    <span class="dot-green" id="remoteStatusDot"></span>
-                    <span id="remoteStatus">Waiting for connection...</span>
+                    <span class="dot-green" id="statusDot"></span>
+                    <span id="statusText">Monitoring...</span>
                 </div>
             </div>
 
-            <button class="action-btn" id="simulateRemoteBtn">
-                <span class="icon">🔄</span> Simulate new remote peer
-            </button>
-            <button class="action-btn" id="clearLogBtn">
-                <span class="icon">🗑️</span> Clear history
+            <button class="action-btn" id="scanBtn">
+                <span class="icon">🔄</span> Scan for active connections
             </button>
 
             <div style="margin-top: 4px;">
                 <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: #6d7f96; margin-bottom: 4px;">
-                    <span>Connection history</span>
-                    <span id="logCount">0 entries</span>
+                    <span>WebRTC Stats</span>
+                    <span id="statsCount">0 entries</span>
                 </div>
-                <div class="remote-log" id="remoteLog">
+                <div class="stats-log" id="statsLog">
                     <div style="color: #6d7f96; text-align: center; padding: 10px; font-size: 0.75rem;">
-                        No connections logged yet
+                        No WebRTC connections detected
                     </div>
                 </div>
             </div>
 
             <div class="footnote">
-                ⚡ Remote peer info is simulated via WebRTC &amp; IP detection · OmeTV loaded in iframe.
+                ⚠️ Due to browser security, remote peer IP/location cannot be directly accessed.<br>
+                This tool captures available WebRTC stats only.
             </div>
         </div>
     </div>
@@ -391,225 +343,238 @@
             "use strict";
 
             // DOM elements
+            const remoteIP = document.getElementById('remoteIP');
             const remoteCountry = document.getElementById('remoteCountry');
             const remoteCity = document.getElementById('remoteCity');
             const remoteRegion = document.getElementById('remoteRegion');
-            const remoteTimezone = document.getElementById('remoteTimezone');
-            const remoteISP = document.getElementById('remoteISP');
-            const remoteQuality = document.getElementById('remoteQuality');
-            const remoteTime = document.getElementById('remoteTime');
-            const remoteStatus = document.getElementById('remoteStatus');
-            const remoteStatusDot = document.getElementById('remoteStatusDot');
-            const connectionCount = document.getElementById('connectionCount');
-            const remoteLog = document.getElementById('remoteLog');
-            const logCount = document.getElementById('logCount');
+            const connectionType = document.getElementById('connectionType');
+            const rttDisplay = document.getElementById('rttDisplay');
+            const statusText = document.getElementById('statusText');
+            const statusDot = document.getElementById('statusDot');
+            const statsLog = document.getElementById('statsLog');
+            const statsCount = document.getElementById('statsCount');
 
-            let connectionHistory = [];
-            let connectionCounter = 0;
-            let currentRemoteIP = null;
+            let statsHistory = [];
+            let scanInterval = null;
 
-            // --- Simulate remote peer detection ---
-            async function detectRemotePeer() {
-                // This simulates detecting a new remote peer when a connection is established
-                // In a real implementation, you would intercept WebRTC ICE candidates or use STUN/TURN
-                
-                // Generate random remote peer data
-                const countries = [
-                    { country: 'United States', city: 'New York', region: 'NY', timezone: 'America/New_York', isp: 'Verizon', flag: '🇺🇸' },
-                    { country: 'United Kingdom', city: 'London', region: 'England', timezone: 'Europe/London', isp: 'BT Group', flag: '🇬🇧' },
-                    { country: 'Germany', city: 'Berlin', region: 'Berlin', timezone: 'Europe/Berlin', isp: 'Deutsche Telekom', flag: '🇩🇪' },
-                    { country: 'France', city: 'Paris', region: 'Île-de-France', timezone: 'Europe/Paris', isp: 'Orange', flag: '🇫🇷' },
-                    { country: 'Japan', city: 'Tokyo', region: 'Tokyo', timezone: 'Asia/Tokyo', isp: 'NTT', flag: '🇯🇵' },
-                    { country: 'Brazil', city: 'São Paulo', region: 'SP', timezone: 'America/Sao_Paulo', isp: 'Vivo', flag: '🇧🇷' },
-                    { country: 'Australia', city: 'Sydney', region: 'NSW', timezone: 'Australia/Sydney', isp: 'Telstra', flag: '🇦🇺' },
-                    { country: 'India', city: 'Mumbai', region: 'Maharashtra', timezone: 'Asia/Kolkata', isp: 'Jio', flag: '🇮🇳' },
-                    { country: 'Canada', city: 'Toronto', region: 'ON', timezone: 'America/Toronto', isp: 'Bell Canada', flag: '🇨🇦' },
-                    { country: 'Mexico', city: 'Mexico City', region: 'CDMX', timezone: 'America/Mexico_City', isp: 'Telmex', flag: '🇲🇽' },
-                    { country: 'Spain', city: 'Madrid', region: 'Madrid', timezone: 'Europe/Madrid', isp: 'Movistar', flag: '🇪🇸' },
-                    { country: 'Italy', city: 'Rome', region: 'Lazio', timezone: 'Europe/Rome', isp: 'TIM', flag: '🇮🇹' },
-                    { country: 'Netherlands', city: 'Amsterdam', region: 'NH', timezone: 'Europe/Amsterdam', isp: 'KPN', flag: '🇳🇱' },
-                    { country: 'South Korea', city: 'Seoul', region: 'Seoul', timezone: 'Asia/Seoul', isp: 'KT', flag: '🇰🇷' },
-                    { country: 'Russia', city: 'Moscow', region: 'Moscow', timezone: 'Europe/Moscow', isp: 'Rostelecom', flag: '🇷🇺' }
-                ];
+            // --- Detect WebRTC connections and extract stats ---
+            async function scanWebRTCConnections() {
+                try {
+                    // Get all RTCPeerConnection instances (not directly accessible)
+                    // We'll try to get stats via the iframe's window if possible
+                    const iframe = document.getElementById('omeIframe');
+                    let peerConnections = [];
 
-                const random = countries[Math.floor(Math.random() * countries.length)];
-                const qualities = ['Excellent', 'Good', 'Fair', 'Poor'];
-                const quality = qualities[Math.floor(Math.random() * qualities.length)];
-                
-                // Generate random IP
-                const ip = `${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`;
-                currentRemoteIP = ip;
+                    // Attempt to access iframe's RTCPeerConnection (same-origin only)
+                    try {
+                        const iframeWindow = iframe.contentWindow;
+                        if (iframeWindow && iframeWindow.RTCPeerConnection) {
+                            // This is a long shot - we can't enumerate active connections
+                            // but we can try to get stats from the iframe's media devices
+                            const mediaDevices = iframeWindow.navigator.mediaDevices;
+                            if (mediaDevices) {
+                                // Check if there are any active streams
+                                const devices = await mediaDevices.enumerateDevices();
+                                const hasCam = devices.some(d => d.kind === 'videoinput' && d.deviceId);
+                                const hasMic = devices.some(d => d.kind === 'audioinput' && d.deviceId);
+                                
+                                if (hasCam || hasMic) {
+                                    addStatsEntry('📹 Media devices detected', 'Active camera/microphone');
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        // Cross-origin iframe - cannot access
+                        addStatsEntry('🔒 Cross-origin iframe', 'Cannot access WebRTC details directly');
+                    }
 
-                const remoteData = {
-                    ip: ip,
-                    country: random.country,
-                    city: random.city,
-                    region: random.region,
-                    timezone: random.timezone,
-                    isp: random.isp,
-                    flag: random.flag,
-                    quality: quality,
-                    timestamp: new Date().toLocaleTimeString(),
-                    connectedAt: new Date().toLocaleString()
-                };
+                    // Alternative: Use WebRTC API in the main window
+                    // Try to get stats from any local peer connections
+                    // This is limited - we can't see remote peer connections directly
+                    
+                    // Check for getUserMedia usage
+                    if (navigator.mediaDevices) {
+                        try {
+                            const devices = await navigator.mediaDevices.enumerateDevices();
+                            const hasDevices = devices.some(d => d.kind === 'videoinput' || d.kind === 'audioinput');
+                            if (hasDevices) {
+                                addStatsEntry('🎥 Media devices available', 'Camera and/or microphone detected');
+                            }
+                        } catch (e) {
+                            addStatsEntry('⚠️ Media device error', e.message);
+                        }
+                    }
 
-                return remoteData;
-            }
+                    // Update status
+                    statusText.textContent = 'Scan complete';
+                    statusDot.className = 'dot-green';
 
-            // --- Update UI with remote data ---
-            function updateRemoteInfo(data) {
-                remoteCountry.textContent = `${data.flag} ${data.country}`;
-                remoteCity.textContent = data.city;
-                remoteRegion.textContent = data.region;
-                remoteTimezone.textContent = data.timezone;
-                remoteISP.textContent = data.isp;
-                remoteQuality.textContent = data.quality;
-                remoteTime.textContent = data.connectedAt;
-
-                // Update status
-                remoteStatus.textContent = `Connected to ${data.country}`;
-                remoteStatusDot.className = 'dot-green';
-                
-                // Update connection counter
-                connectionCounter++;
-                connectionCount.textContent = connectionCounter;
-
-                // Add to history log
-                addToLog(data);
-            }
-
-            // --- Add entry to log ---
-            function addToLog(data) {
-                connectionHistory.unshift(data);
-                if (connectionHistory.length > 20) {
-                    connectionHistory.pop();
+                } catch (error) {
+                    console.error('Scan error:', error);
+                    addStatsEntry('❌ Scan error', error.message);
+                    statusText.textContent = 'Error scanning';
+                    statusDot.className = 'dot-yellow';
                 }
-                renderLog();
             }
 
-            // --- Render log ---
-            function renderLog() {
-                if (connectionHistory.length === 0) {
-                    remoteLog.innerHTML = `
+            // --- Add entry to stats log ---
+            function addStatsEntry(label, value) {
+                const timestamp = new Date().toLocaleTimeString();
+                statsHistory.unshift({ timestamp, label, value });
+                if (statsHistory.length > 50) {
+                    statsHistory.pop();
+                }
+                renderStatsLog();
+            }
+
+            // --- Render stats log ---
+            function renderStatsLog() {
+                if (statsHistory.length === 0) {
+                    statsLog.innerHTML = `
                         <div style="color: #6d7f96; text-align: center; padding: 10px; font-size: 0.75rem;">
-                            No connections logged yet
+                            No WebRTC stats available
                         </div>
                     `;
-                    logCount.textContent = '0 entries';
+                    statsCount.textContent = '0 entries';
                     return;
                 }
 
                 let html = '';
-                connectionHistory.forEach((entry, index) => {
-                    const time = entry.timestamp || '—';
-                    const details = `${entry.flag} ${entry.country} · ${entry.city}`;
-                    const quality = entry.quality || '—';
+                statsHistory.forEach((entry) => {
                     html += `
-                        <div class="log-entry">
-                            <span class="time">${time}</span>
-                            <span class="details">${details} · ${quality}</span>
+                        <div class="entry">
+                            <span style="color:#6d7f96;">${entry.timestamp}</span>
+                            <span style="color:#b9d0e8;">${entry.label}</span>
+                            <span style="color:#7dd3fc;float:right;">${entry.value}</span>
                         </div>
                     `;
                 });
-                remoteLog.innerHTML = html;
-                logCount.textContent = `${connectionHistory.length} entries`;
+                statsLog.innerHTML = html;
+                statsCount.textContent = `${statsHistory.length} entries`;
             }
 
-            // --- Simulate new remote connection ---
-            async function simulateNewRemote() {
-                // Show connecting status
-                remoteStatus.textContent = 'Connecting to remote peer...';
-                remoteStatusDot.className = 'dot-yellow';
-                remoteCountry.textContent = '⏳';
-                remoteCity.textContent = '—';
-                remoteRegion.textContent = '—';
-                remoteTimezone.textContent = '—';
-                remoteISP.textContent = '—';
-                remoteQuality.textContent = '—';
-                remoteTime.textContent = '—';
+            // --- Attempt to get remote IP via WebRTC candidate (privacy-limited) ---
+            async function attemptRemoteIPDetection() {
+                try {
+                    // This attempts to create a dummy peer connection to get local/remote candidates
+                    // Note: This only works for local IPs and is not a reliable method
+                    const pc = new RTCPeerConnection({
+                        iceServers: [
+                            { urls: 'stun:stun.l.google.com:19302' }
+                        ]
+                    });
 
-                // Simulate connection delay
-                await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 1200));
+                    // Add a dummy data channel to force negotiation
+                    const dc = pc.createDataChannel('test');
+                    
+                    // Create offer to trigger ICE gathering
+                    const offer = await pc.createOffer();
+                    await pc.setLocalDescription(offer);
 
-                // Get remote data
-                const data = await detectRemotePeer();
-                updateRemoteInfo(data);
+                    // Wait for ICE candidates
+                    return new Promise((resolve) => {
+                        let candidates = [];
+                        let timeout = setTimeout(() => {
+                            pc.close();
+                            resolve(candidates);
+                        }, 3000);
 
-                // If the log is empty, add a welcome entry
-                if (connectionHistory.length === 1) {
-                    // Already added through updateRemoteInfo
+                        pc.onicecandidate = (event) => {
+                            if (event.candidate) {
+                                const candidate = event.candidate.candidate;
+                                // Try to extract IP from candidate
+                                const ipMatch = candidate.match(/(\d{1,3}\.){3}\d{1,3}/);
+                                if (ipMatch) {
+                                    candidates.push(ipMatch[0]);
+                                    addStatsEntry('🔍 ICE candidate found', ipMatch[0]);
+                                }
+                            }
+                        };
+
+                        pc.onicecandidateerror = (error) => {
+                            addStatsEntry('❌ ICE error', error.message || 'Unknown');
+                        };
+                    });
+                } catch (error) {
+                    addStatsEntry('❌ WebRTC error', error.message);
                 }
             }
 
-            // --- Clear log ---
-            function clearLog() {
-                connectionHistory = [];
-                renderLog();
-                connectionCounter = 0;
-                connectionCount.textContent = '0';
-                remoteCountry.textContent = '—';
-                remoteCity.textContent = '—';
-                remoteRegion.textContent = '—';
-                remoteTimezone.textContent = '—';
-                remoteISP.textContent = '—';
-                remoteQuality.textContent = '—';
-                remoteTime.textContent = '—';
-                remoteStatus.textContent = 'Waiting for connection...';
-                remoteStatusDot.className = 'dot-green';
-                currentRemoteIP = null;
-            }
-
-            // --- Auto-simulate remote connections periodically ---
-            let autoSimulateInterval = null;
-            let isAutoSimulating = false;
-
-            function startAutoSimulate() {
-                if (autoSimulateInterval) {
-                    clearInterval(autoSimulateInterval);
-                }
-                // Simulate new connection every 15-25 seconds
-                autoSimulateInterval = setInterval(async () => {
-                    if (!isAutoSimulating) {
-                        isAutoSimulating = true;
-                        await simulateNewRemote();
-                        isAutoSimulating = false;
+            // --- Get public IP (for reference) ---
+            async function getPublicIP() {
+                try {
+                    const response = await fetch('https://api.ipify.org?format=json');
+                    const data = await response.json();
+                    const ip = data.ip;
+                    remoteIP.textContent = ip;
+                    addStatsEntry('🌐 Your public IP', ip);
+                    
+                    // Try to get geolocation from IP
+                    try {
+                        const geoRes = await fetch(`https://ipapi.co/${ip}/json/`);
+                        const geoData = await geoRes.json();
+                        if (geoData.country_name) {
+                            remoteCountry.textContent = geoData.country_name;
+                            remoteCity.textContent = geoData.city || '—';
+                            remoteRegion.textContent = geoData.region || '—';
+                            connectionType.textContent = geoData.org || '—';
+                            addStatsEntry('📍 Your location', `${geoData.city}, ${geoData.country_name}`);
+                        }
+                    } catch (e) {
+                        // Ignore geo errors
                     }
-                }, 15000 + Math.random() * 10000);
+                } catch (error) {
+                    remoteIP.textContent = '—';
+                }
+            }
+
+            // --- Auto-scan periodically ---
+            function startAutoScan() {
+                if (scanInterval) {
+                    clearInterval(scanInterval);
+                }
+                // Scan every 10 seconds
+                scanInterval = setInterval(() => {
+                    scanWebRTCConnections();
+                }, 10000);
             }
 
             // --- Initialize ---
-            function init() {
-                // Initial remote detection after short delay
-                setTimeout(async () => {
-                    await simulateNewRemote();
-                }, 2000);
+            async function init() {
+                // Get public IP and basic location
+                await getPublicIP();
+                
+                // Initial scan
+                await scanWebRTCConnections();
+                
+                // Try to detect local IPs (for context)
+                await attemptRemoteIPDetection();
 
-                // Start auto-simulation
-                startAutoSimulate();
+                // Start auto-scan
+                startAutoScan();
 
-                // Event listeners
-                document.getElementById('simulateRemoteBtn').addEventListener('click', async () => {
-                    if (!isAutoSimulating) {
-                        isAutoSimulating = true;
-                        await simulateNewRemote();
-                        isAutoSimulating = false;
-                    }
+                // Button listener
+                document.getElementById('scanBtn').addEventListener('click', async () => {
+                    statusText.textContent = 'Scanning...';
+                    statusDot.className = 'dot-yellow';
+                    await scanWebRTCConnections();
+                    await attemptRemoteIPDetection();
                 });
 
-                document.getElementById('clearLogBtn').addEventListener('click', clearLog);
-
-                // Manual refresh of remote info (simulate reconnection)
-                document.addEventListener('keydown', (e) => {
-                    if (e.key === 'r' && e.ctrlKey) {
-                        e.preventDefault();
-                        simulateNewRemote();
-                    }
-                });
+                // Update status
+                statusText.textContent = 'Monitoring active...';
+                statusDot.className = 'dot-green';
             }
 
             // Start the application
             init();
 
+            // Cleanup on page unload
+            window.addEventListener('beforeunload', () => {
+                if (scanInterval) {
+                    clearInterval(scanInterval);
+                }
+            });
         })();
     </script>
 </body>
