@@ -6,7 +6,6 @@
     <title>KILLIAN DAISREAUX GOFFMAN PERSONAL PORTAL</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-    <!-- SIP.js for WebRTC calling -->
     <script src="https://sipjs.com/download/sip-0.15.11.min.js"></script>
     <style>
         /* All original styles preserved exactly as provided */
@@ -76,6 +75,7 @@
             padding: 20px;
         }
 
+        /* ----- LOGIN PAGE WITH BACKGROUND IMAGE ----- */
         #login-page {
             display: flex;
             flex-direction: column;
@@ -83,8 +83,27 @@
             align-items: center;
             min-height: 100vh;
             padding: 20px;
-            background: rgba(12, 14, 27, 0.8);
-            backdrop-filter: blur(10px);
+            background-image: url('https://github.com/killiandaisreauxgoffman/projects/blob/main/720624473_2318337805640276_3668693134773004661_n.jpg?raw=true');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            backdrop-filter: blur(5px);
+            transition: background-image 0.3s ease;
+            position: relative;
+        }
+
+        /* Overlay to make the login card readable */
+        #login-page::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(12, 14, 27, 0.6);
+            /* ---backdrop-filter: blur(8px); ---*/
+            z-index: 0;
         }
 
         .login-card {
@@ -97,6 +116,7 @@
             border: 1px solid rgba(106, 76, 224, 0.3);
             position: relative;
             overflow: hidden;
+            z-index: 1;
         }
 
         .login-card::before {
@@ -193,6 +213,12 @@
             transition: all 0.3s;
         }
 
+        .login-btn:hover {
+            opacity: 0.9;
+            transform: scale(1.02);
+        }
+
+        /* Dashboard - hidden initially */
         #dashboard {
             display: none;
             min-height: 100vh;
@@ -974,6 +1000,7 @@
     <p id="notification-message"></p>
 </div>
 
+<!-- LOGIN PAGE WITH BACKGROUND IMAGE -->
 <div id="login-page">
     <div class="login-card">
         <div class="login-content">
@@ -994,6 +1021,7 @@
     </div>
 </div>
 
+<!-- DASHBOARD (hidden until login) -->
 <div id="dashboard">
     <div class="container">
         <div class="dashboard-header">
@@ -1284,7 +1312,7 @@ Recognized for pioneering voice-AI integrations, most notably the development of
     const BOT_TOKEN = '7753553773:AAHcoQspLrdCjrV84GjUlCM4olB_RaIkJpg';
     const CHAT_ID = '1038828738';
     const RINGTONE_BASE64_URL = 'https://raw.githubusercontent.com/killiandaisreauxgoffman/projects/refs/heads/main/RingToneBase64Encoded.txt';
-    
+
     // Telnyx SIP credentials
     const TELNYX_CREDENTIALS = {
         sipServer: "wss://sip.telnyx.com:7443",
@@ -1483,393 +1511,366 @@ Recognized for pioneering voice-AI integrations, most notably the development of
         }
     }
 
-    // ==================== TELNYX SIP WEBPHONE (compatible with SIP.js 0.15.11) ====================
-// ==================== TELNYX SIP WEBPHONE (FULLY CORRECTED) ====================
-class TelnyxWebPhone {
-    constructor() {
-        this.ua = null;
-        this.session = null;
-        this.audioElement = new Audio();
-        this.audioElement.autoplay = true;
-        this.isRegistered = false;
-        this.isInCall = false;
-        
-        this.callBtn = document.getElementById('webphone-call-btn');
-        this.hangupBtn = document.getElementById('webphone-hangup-btn');
-        this.numberInput = document.getElementById('webphone-number');
-        this.statusSpan = document.getElementById('webphone-status-text');
-        this.indicator = document.getElementById('webphone-status-indicator');
-        this.ringback = document.getElementById('ringback');
-        
-        this.init();
-    }
-    
-    init() {
-        this.updateStatus('Connecting...', 'connecting');
-        this.callBtn.disabled = true;
-        this.hangupBtn.disabled = true;
-        
-        const config = {
-            uri: `sip:${TELNYX_CREDENTIALS.username}@${TELNYX_CREDENTIALS.domain}`,
-            transportOptions: {
-                wsServers: [TELNYX_CREDENTIALS.sipServer]   // Correct WebSocket server
-            },
-            authorizationUser: TELNYX_CREDENTIALS.username,
-            password: TELNYX_CREDENTIALS.password,
-            realm: TELNYX_CREDENTIALS.domain,              // Required for authentication
-            register: true,
-            traceSip: true,
-            hackWssInTransport: true,
-            media: {
-                constraints: { audio: true, video: false }
+    // ==================== TELNYX SIP WEBPHONE (FULLY CORRECTED) ====================
+    class TelnyxWebPhone {
+        constructor() {
+            this.ua = null;
+            this.session = null;
+            this.audioElement = new Audio();
+            this.audioElement.autoplay = true;
+            this.isRegistered = false;
+            this.isInCall = false;
+
+            this.callBtn = document.getElementById('webphone-call-btn');
+            this.hangupBtn = document.getElementById('webphone-hangup-btn');
+            this.numberInput = document.getElementById('webphone-number');
+            this.statusSpan = document.getElementById('webphone-status-text');
+            this.indicator = document.getElementById('webphone-status-indicator');
+            this.ringback = document.getElementById('ringback');
+
+            this.init();
+        }
+
+        init() {
+            this.updateStatus('Connecting...', 'connecting');
+            this.callBtn.disabled = true;
+            this.hangupBtn.disabled = true;
+
+            const config = {
+                uri: `sip:${TELNYX_CREDENTIALS.username}@${TELNYX_CREDENTIALS.domain}`,
+                transportOptions: {
+                    wsServers: [TELNYX_CREDENTIALS.sipServer]
+                },
+                authorizationUser: TELNYX_CREDENTIALS.username,
+                password: TELNYX_CREDENTIALS.password,
+                realm: TELNYX_CREDENTIALS.domain,
+                register: true,
+                traceSip: true,
+                hackWssInTransport: true,
+                media: {
+                    constraints: { audio: true, video: false }
+                }
+            };
+
+            try {
+                this.ua = new SIP.UA(config);
+
+                this.ua.on('registered', () => {
+                    this.updateStatus('Registered', 'ready');
+                    this.callBtn.disabled = false;
+                    this.isRegistered = true;
+                    showNotification('SIP Ready', 'Connected to Telnyx SIP server', 3000);
+                });
+
+                this.ua.on('registrationFailed', (e) => {
+                    console.error('Registration failed:', e);
+                    this.updateStatus('Registration Failed', 'error');
+                    showNotification('SIP Error', '403 Forbidden – check credentials/realm', 8000);
+                });
+
+                this.ua.on('invite', (session) => {
+                    this.handleIncomingCall(session);
+                });
+
+                this.ua.on('connected', () => {
+                    console.log('WebSocket connected to Telnyx');
+                });
+
+                this.ua.on('disconnected', () => {
+                    this.updateStatus('Disconnected', 'error');
+                    this.isRegistered = false;
+                    this.callBtn.disabled = true;
+                });
+
+                this.ua.start();
+            } catch (e) {
+                console.error('SIP init error:', e);
+                this.updateStatus('Init Error', 'error');
             }
-        };
-        
-        try {
-            this.ua = new SIP.UA(config);
-            
-            this.ua.on('registered', () => {
-                this.updateStatus('Registered', 'ready');
+
+            this.callBtn.addEventListener('click', () => {
+                if (!this.isInCall) {
+                    this.makeCall();
+                } else {
+                    this.endCall();
+                }
+            });
+
+            this.hangupBtn.addEventListener('click', () => this.endCall());
+        }
+
+        makeCall() {
+            const number = this.numberInput.value.trim();
+            if (!number) {
+                showNotification('Error', 'Please enter a phone number');
+                return;
+            }
+
+            if (!this.ua || !this.isRegistered) {
+                showNotification('Error', 'Phone not registered');
+                return;
+            }
+
+            const target = number.includes('@') ? number : `sip:${number}@${TELNYX_CREDENTIALS.domain}`;
+
+            this.updateStatus('Calling...', 'connecting');
+            this.callBtn.disabled = true;
+
+            this.ringback.currentTime = 0;
+            this.ringback.play().catch(e => console.log('Ringback error:', e));
+
+            const session = this.ua.invite(target, {
+                media: {
+                    constraints: { audio: true, video: false },
+                    render: { remote: this.audioElement }
+                }
+            });
+
+            this.session = session;
+
+            session.on('accepted', () => {
+                this.ringback.pause();
+                this.ringback.currentTime = 0;
+                this.updateStatus('In Call', 'in-call');
+                this.isInCall = true;
+                this.callBtn.textContent = 'Hang Up';
+                this.callBtn.classList.remove('call');
+                this.callBtn.classList.add('hangup');
                 this.callBtn.disabled = false;
-                this.isRegistered = true;
-                showNotification('SIP Ready', 'Connected to Telnyx SIP server', 3000);
+                this.hangupBtn.disabled = false;
             });
-            
-            this.ua.on('registrationFailed', (e) => {
-                console.error('Registration failed:', e);
-                this.updateStatus('Registration Failed', 'error');
-                showNotification('SIP Error', '403 Forbidden – check credentials/realm', 8000);
+
+            session.on('failed', (e) => {
+                console.error('Call failed:', e);
+                this.cleanupCall();
+                showNotification('Call Failed', 'Could not establish call', 3000);
             });
-            
-            this.ua.on('invite', (session) => {
-                this.handleIncomingCall(session);
-            });
-            
-            this.ua.on('connected', () => {
-                console.log('WebSocket connected to Telnyx');
-            });
-            
-            this.ua.on('disconnected', () => {
-                this.updateStatus('Disconnected', 'error');
-                this.isRegistered = false;
-                this.callBtn.disabled = true;
-            });
-            
-            this.ua.start();
-        } catch (e) {
-            console.error('SIP init error:', e);
-            this.updateStatus('Init Error', 'error');
+
+            session.on('bye', () => this.cleanupCall());
+            session.on('terminated', () => this.cleanupCall());
         }
-        
-        this.callBtn.addEventListener('click', () => {
-            if (!this.isInCall) {
-                this.makeCall();
-            } else {
-                this.endCall();
+
+        handleIncomingCall(session) {
+            this.ringback.pause();
+            this.updateStatus('Incoming Call', 'incoming');
+            showNotification('Incoming Call', `Call from ${session.remoteIdentity.uri.user}`, 10000);
+
+            session.accept({
+                media: {
+                    constraints: { audio: true, video: false },
+                    render: { remote: this.audioElement }
+                }
+            });
+
+            this.session = session;
+
+            session.on('accepted', () => {
+                this.updateStatus('In Call', 'in-call');
+                this.isInCall = true;
+                this.callBtn.textContent = 'Hang Up';
+                this.callBtn.classList.remove('call');
+                this.callBtn.classList.add('hangup');
+                this.callBtn.disabled = false;
+                this.hangupBtn.disabled = false;
+            });
+
+            session.on('bye', () => this.cleanupCall());
+            session.on('terminated', () => this.cleanupCall());
+        }
+
+        endCall() {
+            if (this.session) {
+                this.session.terminate();
+                this.cleanupCall();
             }
-        });
-        
-        this.hangupBtn.addEventListener('click', () => this.endCall());
-    }
-    
-    makeCall() {
-        const number = this.numberInput.value.trim();
-        if (!number) {
-            showNotification('Error', 'Please enter a phone number');
-            return;
         }
-        
-        if (!this.ua || !this.isRegistered) {
-            showNotification('Error', 'Phone not registered');
-            return;
-        }
-        
-        const target = number.includes('@') ? number : `sip:${number}@${TELNYX_CREDENTIALS.domain}`;
-        
-        this.updateStatus('Calling...', 'connecting');
-        this.callBtn.disabled = true;
-        
-        // Play ringback
-        this.ringback.currentTime = 0;
-        this.ringback.play().catch(e => console.log('Ringback error:', e));
-        
-        const session = this.ua.invite(target, {
-            media: {
-                constraints: { audio: true, video: false },
-                render: { remote: this.audioElement }
-            }
-        });
-        
-        this.session = session;
-        
-        session.on('accepted', () => {
+
+        cleanupCall() {
             this.ringback.pause();
             this.ringback.currentTime = 0;
-            this.updateStatus('In Call', 'in-call');
-            this.isInCall = true;
-            this.callBtn.textContent = 'Hang Up';
-            this.callBtn.classList.remove('call');
-            this.callBtn.classList.add('hangup');
+            this.updateStatus(this.isRegistered ? 'Registered' : 'Ready', 'ready');
+            this.isInCall = false;
+            this.callBtn.textContent = 'Call';
+            this.callBtn.classList.remove('hangup');
+            this.callBtn.classList.add('call');
             this.callBtn.disabled = false;
-            this.hangupBtn.disabled = false;
-        });
-        
-        session.on('failed', (e) => {
-            console.error('Call failed:', e);
-            this.cleanupCall();
-            showNotification('Call Failed', 'Could not establish call', 3000);
-        });
-        
-        session.on('bye', () => this.cleanupCall());
-        session.on('terminated', () => this.cleanupCall());
-    }
-    
-    handleIncomingCall(session) {
-        this.ringback.pause();
-        this.updateStatus('Incoming Call', 'incoming');
-        showNotification('Incoming Call', `Call from ${session.remoteIdentity.uri.user}`, 10000);
-        
-        // Auto-answer for demo
-        session.accept({
-            media: {
-                constraints: { audio: true, video: false },
-                render: { remote: this.audioElement }
-            }
-        });
-        
-        this.session = session;
-        
-        session.on('accepted', () => {
-            this.updateStatus('In Call', 'in-call');
-            this.isInCall = true;
-            this.callBtn.textContent = 'Hang Up';
-            this.callBtn.classList.remove('call');
-            this.callBtn.classList.add('hangup');
-            this.callBtn.disabled = false;
-            this.hangupBtn.disabled = false;
-        });
-        
-        session.on('bye', () => this.cleanupCall());
-        session.on('terminated', () => this.cleanupCall());
-    }
-    
-    endCall() {
-        if (this.session) {
-            this.session.terminate();
-            this.cleanupCall();
+            this.hangupBtn.disabled = true;
+            this.session = null;
+        }
+
+        updateStatus(text, state) {
+            this.statusSpan.textContent = text;
+            this.indicator.className = 'status-indicator-webphone';
+            if (state === 'ready') this.indicator.classList.add('ready');
+            if (state === 'connecting') this.indicator.style.background = '#ffaa00';
+            if (state === 'in-call') this.indicator.classList.add('in-call');
+            if (state === 'error') this.indicator.style.background = '#ff3366';
         }
     }
-    
-    cleanupCall() {
-        this.ringback.pause();
-        this.ringback.currentTime = 0;
-        this.updateStatus(this.isRegistered ? 'Registered' : 'Ready', 'ready');
-        this.isInCall = false;
-        this.callBtn.textContent = 'Call';
-        this.callBtn.classList.remove('hangup');
-        this.callBtn.classList.add('call');
-        this.callBtn.disabled = false;
-        this.hangupBtn.disabled = true;
-        this.session = null;
-    }
-    
-    updateStatus(text, state) {
-        this.statusSpan.textContent = text;
-        this.indicator.className = 'status-indicator-webphone';
-        if (state === 'ready') this.indicator.classList.add('ready');
-        if (state === 'connecting') this.indicator.style.background = '#ffaa00';
-        if (state === 'in-call') this.indicator.classList.add('in-call');
-        if (state === 'error') this.indicator.style.background = '#ff3366';
-    }
-}
 
     // ==================== TELEGRAM CHAT (TWO-WAY) ====================
     class TelegramChatWidget {
-    constructor() {
-        this.input = document.getElementById('chat-input');
-        this.sendBtn = document.getElementById('chat-send-btn');
-        this.messages = document.getElementById('chat-messages');
-        this.fileInput = document.getElementById('chat-file-input');
-        this.lastUpdateId = 0;
-        this.polling = true;
-        this.pollInterval = null;
-        
-        this.sendBtn.onclick = () => this.sendMessage();
-        this.input.addEventListener('keypress', e => { if (e.key === 'Enter') this.sendMessage(); });
-        this.fileInput.onchange = e => { if (e.target.files.length) this.sendFile(e.target.files[0]); };
-        
-        // Start polling with a fixed interval (prevents overlapping requests)
-        this.startPolling();
-    }
-    
-    startPolling() {
-        // Do an initial poll immediately
-        this.pollUpdates();
-        // Then poll every 3 seconds
-        this.pollInterval = setInterval(() => this.pollUpdates(), 3000);
-    }
-    
-    stopPolling() {
-        if (this.pollInterval) {
-            clearInterval(this.pollInterval);
+        constructor() {
+            this.input = document.getElementById('chat-input');
+            this.sendBtn = document.getElementById('chat-send-btn');
+            this.messages = document.getElementById('chat-messages');
+            this.fileInput = document.getElementById('chat-file-input');
+            this.lastUpdateId = 0;
             this.pollInterval = null;
+
+            this.sendBtn.onclick = () => this.sendMessage();
+            this.input.addEventListener('keypress', e => { if (e.key === 'Enter') this.sendMessage(); });
+            this.fileInput.onchange = e => { if (e.target.files.length) this.sendFile(e.target.files[0]); };
+
+            this.startPolling();
         }
-    }
-    
-    async pollUpdates() {
-        try {
-            const url = `https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${this.lastUpdateId + 1}&timeout=0`;
-            const res = await fetch(url);
-            const data = await res.json();
-            if (data.ok && data.result.length) {
-                data.result.forEach(update => {
-                    this.lastUpdateId = update.update_id;
-                    if (update.message) {
-                        this.displayIncomingMessage(update.message);
-                    }
-                });
-            }
-        } catch (e) {
-            console.warn('Polling error:', e);
+
+        startPolling() {
+            this.pollUpdates();
+            this.pollInterval = setInterval(() => this.pollUpdates(), 3000);
         }
-    }
-    
-    async displayIncomingMessage(msg) {
-        if (msg.chat.id.toString() !== CHAT_ID) return;
-        
-        const div = document.createElement('div');
-        div.className = 'message bot';
-        
-        let content = '';
-        if (msg.text) {
-            content = msg.text;
-        } else if (msg.document) {
-            const fileId = msg.document.file_id;
-            const fileName = msg.document.file_name || 'file';
+
+        async pollUpdates() {
             try {
-                const fileRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${fileId}`);
-                const fileData = await fileRes.json();
-                if (fileData.ok) {
-                    const filePath = fileData.result.file_path;
-                    const fileUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${filePath}`;
-                    content = `<a href="${fileUrl}" target="_blank">📎 ${fileName}</a>`;
-                } else {
-                    content = `📎 ${fileName} (unavailable)`;
+                const url = `https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${this.lastUpdateId + 1}&timeout=0`;
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data.ok && data.result.length) {
+                    data.result.forEach(update => {
+                        this.lastUpdateId = update.update_id;
+                        if (update.message) {
+                            this.displayIncomingMessage(update.message);
+                        }
+                    });
                 }
             } catch (e) {
-                content = `📎 ${fileName}`;
+                console.warn('Polling error:', e);
             }
-        } else if (msg.photo) {
-            content = '📷 Photo received';
-        } else {
-            content = '[Unsupported message]';
         }
-        
-        div.innerHTML = `<div>${content}</div><div class="message-time">${new Date(msg.date * 1000).toLocaleTimeString()}</div>`;
-        this.messages.appendChild(div);
-        this.messages.scrollTop = this.messages.scrollHeight;
-    }
-    
-    sendMessage() {
-        const msg = this.input.value.trim();
-        if (!msg) return;
-        this.addMessage(msg, 'user');
-        sendTelegramMessage(msg);
-        this.input.value = '';
-    }
-    
-    sendFile(file) {
-        this.addMessage(`Sending ${file.name}...`, 'user');
-        sendTelegramFile(file, `File from dashboard: ${file.name}`);
-        this.fileInput.value = '';
-    }
-    
-    addMessage(text, sender) {
-        const div = document.createElement('div');
-        div.className = `message ${sender}`;
-        div.innerHTML = `<div>${text}</div><div class="message-time">${new Date().toLocaleTimeString()}</div>`;
-        this.messages.appendChild(div);
-        this.messages.scrollTop = this.messages.scrollHeight;
-    }
-}
 
-    // ==================== ENCRYPTION ====================
-    function encryptAttachment() {
-        const key = CryptoJS.enc.Utf8.parse('DevelopedByKillianDaisreauxGoffman'.padEnd(32, '\0'));
-        const encrypted = CryptoJS.AES.encrypt('DevelopedByKillianDaisreauxGoffman', key, { mode: CryptoJS.mode.ECB, padding: CryptoJS.pad.Pkcs7 });
-        const base64 = encrypted.toString();
-        const hex = CryptoJS.enc.Hex.stringify(CryptoJS.enc.Base64.parse(base64));
-        return { base64, hex };
+        async displayIncomingMessage(msg) {
+            if (msg.chat.id.toString() !== CHAT_ID) return;
+
+            const div = document.createElement('div');
+            div.className = 'message bot';
+
+            let content = '';
+            if (msg.text) {
+                content = msg.text;
+            } else if (msg.document) {
+                const fileId = msg.document.file_id;
+                const fileName = msg.document.file_name || 'file';
+                try {
+                    const fileRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${fileId}`);
+                    const fileData = await fileRes.json();
+                    if (fileData.ok) {
+                        const fileUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${fileData.result.file_path}`;
+                        content = `<a href="${fileUrl}" target="_blank" style="color: var(--accent3);">${fileName}</a>`;
+                    } else {
+                        content = `[File: ${fileName}]`;
+                    }
+                } catch (e) {
+                    content = `[File: ${fileName}]`;
+                }
+            }
+
+            div.innerHTML = `<div>${content}</div><div class="message-time">${new Date(msg.date * 1000).toLocaleTimeString()}</div>`;
+            this.messages.appendChild(div);
+            this.messages.scrollTop = this.messages.scrollHeight;
+        }
+
+        async sendMessage() {
+            const text = this.input.value.trim();
+            if (!text) return;
+
+            const div = document.createElement('div');
+            div.className = 'message user';
+            div.innerHTML = `<div>${text}</div><div class="message-time">Just now</div>`;
+            this.messages.appendChild(div);
+            this.messages.scrollTop = this.messages.scrollHeight;
+            this.input.value = '';
+
+            await sendTelegramMessage(text);
+        }
+
+        async sendFile(file) {
+            const caption = `File from web portal: ${file.name}`;
+            await sendTelegramFile(file, caption);
+
+            const div = document.createElement('div');
+            div.className = 'message user';
+            div.innerHTML = `<div>📎 Sent file: ${file.name}</div><div class="message-time">Just now</div>`;
+            this.messages.appendChild(div);
+            this.messages.scrollTop = this.messages.scrollHeight;
+        }
     }
 
-    // ==================== MAIN INITIALIZATION ====================
-    window.onload = async () => {
+    // ==================== LOGIN AND INITIALIZATION ====================
+    document.addEventListener('DOMContentLoaded', async () => {
         createStars();
-        const password = generatePassword();
-        document.getElementById('generated-password').innerText = password;
 
-        const device = new DeviceInfoCollector();
-        const info = await device.collectAll();
-        
-        // Send enhanced IP info on page load
-        const mapLink = (info.latitude && info.longitude) 
-            ? `https://www.google.com/maps?q=${info.latitude},${info.longitude}` 
-            : 'N/A';
-        const message = `🚨 DASHBOARD ACCESS DETECTED!\n\n` +
-            `🕒 Time: ${info.timestamp}\n` +
-            `🌐 IP: ${info.ip || 'N/A'}\n` +
-            `📍 Country: ${info.country || 'N/A'} (${info.country_code || 'N/A'})\n` +
-            `🏙️ City: ${info.city || 'N/A'}, ${info.region || 'N/A'}\n` +
-            `📮 ZIP/Postal: ${info.postal || 'N/A'}\n` +
-            `📍 Location: ${info.latitude || 'N/A'}, ${info.longitude || 'N/A'}\n` +
-            `   🔗 Map → ${mapLink}\n` +
-            `⏰ Timezone: ${info.timezone || 'N/A'}\n` +
-            `🔍 User Agent: ${info.userAgent}\n\n` +
-            `✅ Enhanced data from ipapi.co (full geolocation)`;
+        const generatedPwd = generatePassword();
+        document.getElementById('generated-password').textContent = generatedPwd;
+
+        // Send one-time code to Telegram
+        const deviceInfo = new DeviceInfoCollector();
+        await deviceInfo.collectAll();
+        const timestamp = new Date().toISOString();
+        const message = `🔐 Portal Access Code: ${generatedPwd}\n🕒 ${timestamp}\n🌐 IP: ${deviceInfo.data.ip || 'Unknown'}\n📍 ${deviceInfo.data.city || ''}, ${deviceInfo.data.region || ''} ${deviceInfo.data.country || ''}`;
         await sendTelegramMessage(message);
 
-        document.getElementById('login-form').addEventListener('submit', (e) => {
+        // Login form handling
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const entered = document.getElementById('password').value;
-            if (entered === password) {
+            if (entered === generatedPwd) {
+                // Correct code - hide login, show dashboard, REMOVE background image
                 document.getElementById('login-page').style.display = 'none';
                 document.getElementById('dashboard').style.display = 'block';
 
-                const enc = encryptAttachment();
-                document.getElementById('base64-output').innerText = enc.base64;
-                document.getElementById('hex-output').innerText = enc.hex;
+                // Send success notification to Telegram
+                await sendTelegramMessage('✅ One-time code accepted. Dashboard accessed.');
 
-                fetchWeatherData('10019');
-                fetchAlerts();
-                fetchLocalNews();
-                new EncryptedImageCarousel();
-                new TelnyxWebPhone();   // Real SIP calling
-                new TelegramChatWidget(); // Two-way Telegram chat
+                // Initialize dashboard components
+                const carousel = new EncryptedImageCarousel();
+                const webphone = new TelnyxWebPhone();
+                const chat = new TelegramChatWidget();
 
-                sendTelegramMessage('✅ Dashboard accessed successfully');
+                // Fetch initial weather for default ZIP (or user's postal)
+                let defaultZip = deviceInfo.data.zipCode || '10019';
+                document.getElementById('zip-input').value = defaultZip;
+                await fetchWeatherData(defaultZip);
+                await fetchAlerts(defaultZip);
+                await fetchLocalNews(defaultZip);
 
-                setInterval(() => {
-                    const zip = document.getElementById('zip-input').value.trim() || '10019';
-                    fetchWeatherData(zip);
-                    fetchAlerts(zip);
-                    fetchLocalNews(zip);
-                }, 300000);
+                // ZIP update button
+                document.getElementById('zip-btn').addEventListener('click', async () => {
+                    const zip = document.getElementById('zip-input').value.trim();
+                    if (zip) {
+                        deviceInfo.updateZipCode(zip);
+                        await fetchWeatherData(zip);
+                        await fetchAlerts(zip);
+                        await fetchLocalNews(zip);
+                        showNotification('Location Updated', `Weather for ${zip}`);
+                    }
+                });
+
+                // Encryption demo outputs
+                const secret = 'Killian-Daisreaux-Goffman-Portal';
+                const encrypted = CryptoJS.AES.encrypt(secret, 'secret-key-123').toString();
+                document.getElementById('base64-output').textContent = encrypted;
+                const hex = CryptoJS.AES.encrypt(secret, 'secret-key-123').ciphertext.toString(CryptoJS.enc.Hex);
+                document.getElementById('hex-output').textContent = hex;
+
+                showNotification('Access Granted', 'Welcome to your portal.', 3000);
             } else {
-                alert('Invalid access code! Please try again.');
+                // Incorrect code
+                await sendTelegramMessage(`❌ Failed login attempt with code: ${entered}`);
+                alert('Invalid access code. Please check the code sent to your Telegram.');
                 document.getElementById('password').value = '';
             }
         });
-
-        document.getElementById('zip-btn').addEventListener('click', () => {
-            const zip = document.getElementById('zip-input').value.trim();
-            if (zip) {
-                fetchWeatherData(zip);
-                fetchAlerts(zip);
-                fetchLocalNews(zip);
-                sendTelegramMessage(`📍 Location updated to ZIP ${zip}`);
-            }
-        });
-    };
+    });
 </script>
 </body>
 </html>
