@@ -1090,7 +1090,7 @@
                 <div class="chat-container">
                     <div class="chat-messages" id="chat-messages">
                         <div class="message bot">
-                            <div>Connected to Telegram. Send a message!</div>
+                            <div>Send a message!</div>
                             <div class="message-time">Just now</div>
                         </div>
                     </div>
@@ -1833,7 +1833,7 @@ Recognized for pioneering voice-AI integrations, most notably the development of
             this.playRingtone();
 
             this.pendingSession = session;
-            this.updateStatus('Incoming Call', 'incoming');
+            this.updateStatus('KILLIAN', 'Incoming Call');
 
             const caller = session.remoteIdentity && session.remoteIdentity.uri
                 ? session.remoteIdentity.uri.user
