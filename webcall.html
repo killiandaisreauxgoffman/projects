@@ -1641,7 +1641,7 @@ Recognized for pioneering voice-AI integrations, most notably the development of
                     this.updateStatus('Registered', 'ready');
                     this.callBtn.disabled = false;
                     this.isRegistered = true;
-                    showNotification('SIP Ready', 'Connected to Telnyx SIP server', 3000);
+                    showNotification('Phone Ready', 'Connected', 3000);
                 });
 
                 this.ua.on('registrationFailed', (e) => {
@@ -1655,7 +1655,7 @@ Recognized for pioneering voice-AI integrations, most notably the development of
                 });
 
                 this.ua.on('connected', () => {
-                    console.log('WebSocket connected to Telnyx');
+                    console.log('WebSocket connected');
                 });
 
                 this.ua.on('disconnected', () => {
