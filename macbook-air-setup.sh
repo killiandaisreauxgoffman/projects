@@ -2,27 +2,25 @@
 #
 # MacBook Air 6,2 (2013/2014) — Arch Linux Complete Setup
 #
-# Purpose:
-#   Configures a fresh Arch Linux install on a MacBookAir6,2 so that:
-#     - Wi-Fi (Broadcom BCM4360) works via DKMS
-#     - FaceTime HD camera works with calibration
-#     - Kernel boots silently with a custom splash image
-#     - Boot menu shows a custom label
-#     - Boot sound plays at the greeter stage
-#     - KDE Plasma backgrounds (desktop, lock, logout, greeter) are custom
-#     - Account locks after 5 failed password attempts
+# Configures a fresh Arch Linux install on a MacBookAir6,2:
+#   - Broadcom BCM4360 Wi-Fi via DKMS
+#   - FaceTime HD camera with calibration
+#   - Silent kernel boot with a custom splash image (BMP preferred)
+#   - Custom boot menu label
+#   - Boot sound at greeter stage (direct ALSA)
+#   - KDE Plasma custom backgrounds (desktop, lock, logout, greeter)
+#   - Account lockout after 5 failed password attempts
+#   - MP4 archive for future use
 #
-# Splash image logic:
-#   1. Try to download the pre-made BMP from GitHub.
-#   2. Validate it is a 1440x900 24-bit BMP.
-#   3. If invalid or download fails, fall back to downloading the PNG
-#      and converting it with ffmpeg.
+# Splash logic:
+#   1. Download pre-made 1440x900 24-bit BMP from GitHub.
+#   2. If invalid or unavailable, fall back to PNG + ffmpeg conversion.
 #
 # Usage:
 #   chmod +x macbook-air-setup.sh
 #   ./macbook-air-setup.sh
 #
-# Run as a normal user (not root). Safe to re-run.
+# Run as a normal user. Safe to re-run. Backs up originals on first run.
 #
 
 set -euo pipefail
@@ -61,7 +59,6 @@ OS_RELEASE="/usr/lib/os-release"
 
 DISPLAY_W=1440
 DISPLAY_H=900
-DISPLAY_RES="${DISPLAY_W}x${DISPLAY_H}"
 QUIET_PARAMS="quiet loglevel=3 systemd.show_status=no rd.udev.log_level=0 vt.global_cursor_default=0"
 LOADER_TIMEOUT=15
 
@@ -92,15 +89,9 @@ require_arch() {
     command -v pacman &>/dev/null || { log_err "Not an Arch system."; exit 1; }
 }
 
-pkg_install() {
-    sudo pacman -S --needed --noconfirm "$@"
-}
+pkg_install() { sudo pacman -S --needed --noconfirm "$@"; }
+aur_install() { paru -S --needed --noconfirm "$@"; }
 
-aur_install() {
-    paru -S --needed --noconfirm "$@"
-}
-
-# Check if a file is a 1440x900 24-bit BMP
 is_valid_bmp() {
     local f="$1"
     [ -f "$f" ] || return 1
@@ -293,44 +284,41 @@ OnlyShowIn=KDE;
 EOF
 
 # ============================================================================
-# [7/11] Splash image — prefer BMP, fall back to PNG + conversion
+# [7/11] Splash image — BMP preferred, PNG fallback
 # ============================================================================
 
 echo ""
 log_info "=== [7/11] Splash image (BMP preferred, PNG fallback) ==="
 
-sudo mkdir -p "$BG_DIR"
-sudo mkdir -p /usr/share/systemd/bootctl
+sudo mkdir -p "$BG_DIR" /usr/share/systemd/bootctl
 
-# --- Attempt 1: download the pre-made BMP directly
 BMP_OK=0
 log_info "Attempting direct BMP download..."
 if sudo curl -fsSL "$BMP_URL" -o "$BG_BMP"; then
     sudo chmod 644 "$BG_BMP"
     if is_valid_bmp "$BG_BMP"; then
-        log_info "BMP downloaded and validated: $(file -b "$BG_BMP")"
+        log_info "BMP validated: $(file -b "$BG_BMP")"
         BMP_OK=1
     else
-        log_warn "Downloaded file is not a valid ${DISPLAY_RES} 24-bit BMP."
+        log_warn "Downloaded file is not a valid ${DISPLAY_W}x${DISPLAY_H} 24-bit BMP."
         log_warn "Got: $(file -b "$BG_BMP")"
     fi
 else
-    log_warn "BMP download failed from $BMP_URL"
+    log_warn "BMP download failed."
 fi
 
-# --- Attempt 2: download PNG and convert if BMP path failed
 if [ "$BMP_OK" -eq 0 ]; then
     log_info "Falling back to PNG download + ffmpeg conversion."
 
     if ! sudo curl -fsSL "$PNG_URL" -o "$BG_FILE"; then
-        fail "PNG download failed from $PNG_URL"
+        fail "PNG download failed."
     fi
     sudo chmod 644 "$BG_FILE"
 
     file "$BG_FILE" | grep -qi 'PNG image' \
         || fail "Downloaded fallback is not a valid PNG."
 
-    log_info "PNG downloaded: $(file -b "$BG_FILE")"
+    log_info "PNG: $(file -b "$BG_FILE")"
 
     sudo ffmpeg -y -i "$BG_FILE" \
         -vf "scale=${DISPLAY_W}:${DISPLAY_H}:force_original_aspect_ratio=increase,crop=${DISPLAY_W}:${DISPLAY_H}" \
@@ -343,14 +331,12 @@ if [ "$BMP_OK" -eq 0 ]; then
     log_info "BMP created: $(file -b "$BG_BMP")"
 fi
 
-# --- Ensure PNG exists for KDE wallpapers (download only if needed)
 if [ ! -f "$BG_FILE" ] || ! file "$BG_FILE" | grep -qi 'PNG image'; then
     log_info "Downloading PNG for KDE wallpaper use..."
-    sudo curl -fsSL "$PNG_URL" -o "$BG_FILE" || log_warn "PNG download failed; skipping KDE wallpaper."
+    sudo curl -fsSL "$PNG_URL" -o "$BG_FILE" || log_warn "PNG download failed."
     sudo chmod 644 "$BG_FILE" 2>/dev/null || true
 fi
 
-# --- Apply KDE wallpapers (only if PNG is present)
 if [ -f "$BG_FILE" ] && file "$BG_FILE" | grep -qi 'PNG image'; then
     command -v plasma-apply-wallpaperimage &>/dev/null && \
         plasma-apply-wallpaperimage "$BG_FILE" || true
