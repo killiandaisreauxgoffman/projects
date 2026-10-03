@@ -4,15 +4,16 @@
 #
 # Handles:
 #   - AUR helper (paru)
-#   - Broadcom BCM4360 Wi-Fi driver + blacklist + profile
+#   - Broadcom BCM4360 Wi-Fi driver + blacklist + profile (216-KILLIAN)
 #   - FaceTime HD Camera drivers + firmware + calibration
-#   - Quiet boot parameters via /etc/kernel/cmdline (authoritative source)
+#   - Kernel command line written to /etc/kernel/cmdline (authoritative)
+#   - Quiet boot parameters (no logs)
 #   - Custom boot splash embedded in the UKI
 #   - Custom boot label via /etc/os-release override
 #   - 15-second systemd-boot menu timeout
-#   - Boot sound at greeter stage (direct ALSA, auto-detected CS4208)
+#   - Boot sound at greeter stage (direct ALSA on CS4208)
 #   - KDE login sound via PipeWire notification
-#   - Custom background for desktop, lock, logout, greeter
+#   - Custom backgrounds (desktop, lock, logout, greeter)
 #   - Account lockout after 5 failed password attempts
 #   - Optional archived MP4 for future use
 #
@@ -20,7 +21,12 @@
 #   chmod +x macbook-air-setup.sh
 #   ./macbook-air-setup.sh
 #
-# Must be run as a normal user (not root). The script uses sudo internally.
+# Requirements:
+#   - A working Arch Linux install with a bootloader, kernel, and sudo
+#   - Network access (Wi-Fi or Ethernet)
+#   - Run as a normal user (not root); sudo is used internally
+#
+# Safe to re-run — each step checks the current state before making changes.
 #
 
 set -euo pipefail
@@ -38,27 +44,24 @@ OS_HOME_URL="https://daisreaux.com/"
 
 SOUND_URL="https://raw.githubusercontent.com/killiandaisreauxgoffman/projects/refs/heads/main/boot-sound.ogg"
 BG_URL="https://github.com/killiandaisreauxgoffman/projects/blob/main/boot-background.png?raw=true"
-MP4_LOCAL_PATH="/home/killian/Downloads/Telegram/failboot-movie.mp4"
+MP4_LOCAL_PATH="${HOME}/Downloads/Telegram/failboot-movie.mp4"
 
 SOUND_DIR="/usr/share/sounds/custom/stereo"
-SOUND_FILE="$SOUND_DIR/desktop-login.ogg"
+SOUND_FILE="${SOUND_DIR}/desktop-login.ogg"
 
 BG_DIR="/usr/share/backgrounds/custom"
-BG_FILE="$BG_DIR/boot-background.png"
+BG_FILE="${BG_DIR}/boot-background.png"
 BG_BMP="/usr/share/systemd/bootctl/splash-arch.bmp"
 
 MEDIA_DIR="/usr/local/share/media"
-MP4_FILE="$MEDIA_DIR/failboot-movie.mp4"
+MP4_FILE="${MEDIA_DIR}/failboot-movie.mp4"
 
 CMD_LINE_FILE="/etc/kernel/cmdline"
 PRESET_FILE="/etc/mkinitcpio.d/linux.preset"
 UKI_PATH="/boot/EFI/Linux/arch-linux.efi"
 LOADER_CONF="/boot/loader/loader.conf"
 
-# Screen resolution for the MacBookAir6,2
 DISPLAY_RES="1440x900"
-
-# Extra kernel parameters for quiet boot
 QUIET_PARAMS="quiet loglevel=3 systemd.show_status=auto rd.udev.log_level=3 vt.global_cursor_default=0"
 
 # ============================================================================
@@ -70,9 +73,9 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-log_info()  { echo -e "${GREEN}[INFO]${NC} $1"; }
-log_warn()  { echo -e "${YELLOW}[WARN]${NC} $1"; }
-log_err()   { echo -e "${RED}[ERROR]${NC} $1"; }
+log_info() { echo -e "${GREEN}[INFO]${NC} $1"; }
+log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
+log_err()  { echo -e "${RED}[ERROR]${NC} $1"; }
 
 fail() {
     log_err "$1"
@@ -101,26 +104,19 @@ require_arch() {
 require_user
 require_arch
 
-# Detect the current kernel command line from the running system
 CURRENT_CMDLINE=$(cat /proc/cmdline 2>/dev/null || true)
-if [ -z "$CURRENT_CMDLINE" ]; then
-    fail "Could not read /proc/cmdline."
-fi
+[ -z "$CURRENT_CMDLINE" ] && fail "Could not read /proc/cmdline."
 log_info "Current kernel command line: $CURRENT_CMDLINE"
 
-# Extract the root= parameter from the running system (PARTUUID or UUID)
-ROOT_PARAM=$(echo "$CURRENT_CMDLINE" | tr ' ' '\n' | grep -E '^root=' | head -1)
-if [ -z "$ROOT_PARAM" ]; then
-    fail "Could not detect root= parameter from /proc/cmdline."
-fi
+ROOT_PARAM=$(echo "$CURRENT_CMDLINE" | tr ' ' '\n' | grep -E '^root=' | head -1 || true)
+[ -z "$ROOT_PARAM" ] && fail "Could not detect root= from /proc/cmdline."
 log_info "Detected: $ROOT_PARAM"
 
-# Extract any other pre-existing parameters that must be preserved
 ROOTFLAGS_PARAM=$(echo "$CURRENT_CMDLINE" | tr ' ' '\n' | grep -E '^rootflags=' | head -1 || true)
 ROOTFSTYPE_PARAM=$(echo "$CURRENT_CMDLINE" | tr ' ' '\n' | grep -E '^rootfstype=' | head -1 || true)
 ZSWAP_PARAM=$(echo "$CURRENT_CMDLINE" | tr ' ' '\n' | grep -E '^zswap\.' | head -1 || true)
 
-log_info "Preserved params: ${ROOTFLAGS_PARAM:-none} ${ROOTFSTYPE_PARAM:-none} ${ZSWAP_PARAM:-none}"
+log_info "Preserved: ${ROOTFLAGS_PARAM:-none} ${ROOTFSTYPE_PARAM:-none} ${ZSWAP_PARAM:-none}"
 
 # ============================================================================
 # [1/11] AUR helper — paru
@@ -135,7 +131,7 @@ if ! command -v paru &>/dev/null; then
     git clone https://aur.archlinux.org/paru.git "$TMPDIR/paru"
     cd "$TMPDIR/paru"
     makepkg -si --noconfirm
-    cd ~
+    cd "$HOME"
     rm -rf "$TMPDIR"
 else
     log_info "paru is already installed."
@@ -162,9 +158,7 @@ blacklist ssb
 EOF
 fi
 
-if ! lsmod | grep -q '^wl '; then
-    sudo modprobe wl || true
-fi
+lsmod | grep -q '^wl ' || sudo modprobe wl || true
 
 # ============================================================================
 # [3/11] FaceTime HD camera
@@ -177,9 +171,7 @@ paru -S --needed --noconfirm \
     facetimehd-firmware \
     facetimehd-data
 
-if ! lsmod | grep -q '^facetimehd '; then
-    sudo modprobe facetimehd || true
-fi
+lsmod | grep -q '^facetimehd ' || sudo modprobe facetimehd || true
 
 # ============================================================================
 # [4/11] NetworkManager and Wi-Fi profile
@@ -212,11 +204,10 @@ else
         connection.autoconnect yes
 fi
 
-sudo nmcli connection up "$WIFI_CON_NAME" \
-    || log_warn "Could not bring up '$WIFI_CON_NAME'."
+sudo nmcli connection up "$WIFI_CON_NAME" || log_warn "Could not bring up '$WIFI_CON_NAME'."
 
 # ============================================================================
-# [5/11] Boot sound at greeter stage (direct ALSA)
+# [5/11] Boot sound at greeter stage (direct ALSA on CS4208)
 # ============================================================================
 
 echo ""
@@ -241,8 +232,7 @@ Directories=stereo
 OutputProfile=stereo
 EOF
 
-# Auto-detect the CS4208 card number
-CS4208_CARD=$(aplay -l 2>/dev/null | awk '/CS4208 Analog/ {gsub("card ","",$1); gsub(":","",$1); print $1; exit}')
+CS4208_CARD=$(aplay -l 2>/dev/null | awk '/CS4208 Analog/ {gsub("card ","",$1); gsub(":","",$1); print $1; exit}' || true)
 if [ -n "$CS4208_CARD" ]; then
     AUDIO_DEVICE="alsa/hw:${CS4208_CARD},0"
     log_info "Detected CS4208 on card $CS4208_CARD; using $AUDIO_DEVICE"
@@ -273,7 +263,7 @@ sudo systemctl daemon-reload
 sudo systemctl enable boot-sound.service
 
 # ============================================================================
-# [6/11] KDE login sound (via PipeWire) and session autostart
+# [6/11] KDE login sound and autostart
 # ============================================================================
 
 echo ""
@@ -297,7 +287,7 @@ OnlyShowIn=KDE;
 EOF
 
 # ============================================================================
-# [7/11] Background image and greeter
+# [7/11] Background image and KDE surfaces
 # ============================================================================
 
 echo ""
@@ -311,9 +301,8 @@ sudo ffmpeg -y -i "$BG_FILE" \
     -vf "scale=${DISPLAY_RES}:force_original_aspect_ratio=decrease,pad=${DISPLAY_RES}:(ow-iw)/2:(oh-ih)/2" \
     -pix_fmt bgr24 "$BG_BMP"
 
-if command -v plasma-apply-wallpaperimage &>/dev/null; then
+command -v plasma-apply-wallpaperimage &>/dev/null && \
     plasma-apply-wallpaperimage "$BG_FILE" || true
-fi
 
 kwriteconfig6 --file kscreenlockerrc \
     --group Greeter --group Wallpaper --group org.kde.image --group General \
@@ -339,32 +328,32 @@ if id plasmalogin &>/dev/null; then
 fi
 
 # ============================================================================
-# [8/11] Kernel command line — WRITE TO /etc/kernel/cmdline
+# [8/11] Kernel command line — authoritative source
 # ============================================================================
 
 echo ""
 log_info "=== [8/11] Writing kernel command line to $CMD_LINE_FILE ==="
 
-# Back up the existing file once
 if [ -f "$CMD_LINE_FILE" ] && [ ! -f "${CMD_LINE_FILE}.orig" ]; then
     sudo cp "$CMD_LINE_FILE" "${CMD_LINE_FILE}.orig"
     log_info "Backed up original cmdline to ${CMD_LINE_FILE}.orig"
 fi
 
-# Build the new cmdline, preserving root=, rootflags=, rootfstype=, zswap.*
 NEW_CMDLINE="$ROOT_PARAM"
-[ -n "$ZSWAP_PARAM" ]     && NEW_CMDLINE="$NEW_CMDLINE $ZSWAP_PARAM"
-[ -n "$ROOTFLAGS_PARAM" ] && NEW_CMDLINE="$NEW_CMDLINE $ROOTFLAGS_PARAM"
+[ -n "$ZSWAP_PARAM" ]      && NEW_CMDLINE="$NEW_CMDLINE $ZSWAP_PARAM"
+[ -n "$ROOTFLAGS_PARAM" ]  && NEW_CMDLINE="$NEW_CMDLINE $ROOTFLAGS_PARAM"
 [ -n "$ROOTFSTYPE_PARAM" ] && NEW_CMDLINE="$NEW_CMDLINE $ROOTFSTYPE_PARAM"
 
-# Add "rw" if not already present
 if ! echo "$NEW_CMDLINE" | grep -qE '(^| )rw( |$)'; then
     NEW_CMDLINE="$NEW_CMDLINE rw"
 fi
 
-# Append the quiet parameters
-NEW_CMDLINE="$NEW_CMDLINE $QUIET_PARAMS"
+# Strip any previous quiet params before appending, so re-runs don't duplicate
+for p in $QUIET_PARAMS; do
+    NEW_CMDLINE=$(echo "$NEW_CMDLINE" | sed "s| $p||g")
+done
 
+NEW_CMDLINE="$NEW_CMDLINE $QUIET_PARAMS"
 log_info "New cmdline: $NEW_CMDLINE"
 
 sudo tee "$CMD_LINE_FILE" > /dev/null << EOF
@@ -372,13 +361,12 @@ $NEW_CMDLINE
 EOF
 
 # ============================================================================
-# [9/11] UKI preset — reference cmdline file, embed splash
+# [9/11] UKI preset (no default_options; cmdline file wins)
 # ============================================================================
 
 echo ""
 log_info "=== [9/11] Rewriting UKI preset ==="
 
-# Back up the preset once
 if [ ! -f "${PRESET_FILE}.orig" ]; then
     sudo cp "$PRESET_FILE" "${PRESET_FILE}.orig"
     log_info "Backed up original preset to ${PRESET_FILE}.orig"
@@ -394,35 +382,23 @@ PRESETS=('default')
 default_uki="$UKI_PATH"
 EOF
 
-# Rebuild the UKI
 sudo mkinitcpio -P
 
-# ============================================================================
-# [9b/11] VERIFY the .cmdline section of the UKI
-# ============================================================================
-
+# --- Verify UKI ---
 echo ""
 log_info "=== Verifying UKI .cmdline section ==="
 
-CMDLINE_SECTION=$(sudo objdump -h "$UKI_PATH" 2>/dev/null | awk '$2 == ".cmdline" {print $3}')
-if [ -z "$CMDLINE_SECTION" ]; then
-    fail "UKI does not contain a .cmdline section. DO NOT REBOOT."
-fi
+CMDLINE_SECTION=$(sudo objdump -h "$UKI_PATH" 2>/dev/null | awk '$2 == ".cmdline" {print $3}' || true)
+[ -z "$CMDLINE_SECTION" ] && fail "UKI does not contain a .cmdline section. DO NOT REBOOT."
 log_info "UKI .cmdline section size: $CMDLINE_SECTION bytes"
 
-# Extract and check the content
 sudo objdump -s -j .cmdline "$UKI_PATH" > /tmp/uki-cmdline.txt 2>/dev/null || true
-if ! grep -q 'quiet' /tmp/uki-cmdline.txt; then
-    fail "UKI .cmdline section does not contain 'quiet'. DO NOT REBOOT."
-fi
-if ! grep -q "$(echo "$ROOT_PARAM" | sed 's/=/=/g' | cut -c1-20)" /tmp/uki-cmdline.txt; then
-    log_warn "Could not verify root= parameter in hex dump (this is normal — check manually)."
-fi
+grep -q 'quiet' /tmp/uki-cmdline.txt || fail "UKI .cmdline does not contain 'quiet'. DO NOT REBOOT."
 
-log_info "UKI .cmdline section verified. Safe to proceed."
+log_info "UKI verified. Safe to proceed."
 
 # ============================================================================
-# [10/11] OS release override (boot menu label)
+# [10/11] Boot label
 # ============================================================================
 
 echo ""
@@ -444,21 +420,17 @@ EOF
 
 sudo mkinitcpio -P
 
-# Re-verify the .cmdline section after the second build
-CMDLINE_SECTION=$(sudo objdump -h "$UKI_PATH" 2>/dev/null | awk '$2 == ".cmdline" {print $3}')
-if [ -z "$CMDLINE_SECTION" ]; then
-    fail "UKI lost its .cmdline section after the second rebuild. DO NOT REBOOT."
-fi
+CMDLINE_SECTION=$(sudo objdump -h "$UKI_PATH" 2>/dev/null | awk '$2 == ".cmdline" {print $3}' || true)
+[ -z "$CMDLINE_SECTION" ] && fail "UKI lost its .cmdline section after the second rebuild. DO NOT REBOOT."
 log_info "UKI verified after label update."
 
 # ============================================================================
-# [11/11] Boot timeout, account lockout, MP4 archive
+# [11/11] Boot timeout, faillock, MP4 archive
 # ============================================================================
 
 echo ""
 log_info "=== [11/11] Finalizing system configuration ==="
 
-# Boot menu timeout
 if [ -f "$LOADER_CONF" ]; then
     if grep -q '^timeout' "$LOADER_CONF"; then
         sudo sed -i 's/^timeout.*/timeout 15/' "$LOADER_CONF"
@@ -467,7 +439,6 @@ if [ -f "$LOADER_CONF" ]; then
     fi
 fi
 
-# faillock policy
 sudo tee /etc/security/faillock.conf > /dev/null << 'EOF'
 deny = 5
 unlock_time = 900
@@ -476,7 +447,6 @@ EOF
 
 sudo faillock --user "$(whoami)" --reset || true
 
-# Archive the MP4
 if [ -f "$MP4_LOCAL_PATH" ] && [ ! -f "$MP4_FILE" ]; then
     sudo mkdir -p "$MEDIA_DIR"
     sudo cp "$MP4_LOCAL_PATH" "$MP4_FILE"
@@ -506,14 +476,13 @@ EOF
 echo ""
 log_info "=== Setup Complete ==="
 echo ""
-log_info "Final verification before reboot:"
+log_info "Final UKI verification:"
 sudo objdump -h "$UKI_PATH" | grep -E 'cmdline|splash|osrel' || true
 echo ""
-log_info "Check the .cmdline section contains 'quiet':"
-sudo objdump -s -j .cmdline "$UKI_PATH" 2>/dev/null | grep -c quiet || echo "0 (check manually)"
-echo ""
-log_info "If both checks above pass, run: sudo reboot"
-log_info "If anything looks wrong, DO NOT REBOOT. Run:"
+log_info "If everything above looks correct, reboot:"
+log_info "  sudo reboot"
+log_info ""
+log_info "If anything is wrong and you need to roll back:"
 log_info "  sudo cp ${PRESET_FILE}.orig ${PRESET_FILE}"
 log_info "  sudo cp ${CMD_LINE_FILE}.orig ${CMD_LINE_FILE}"
 log_info "  sudo mkinitcpio -P"
