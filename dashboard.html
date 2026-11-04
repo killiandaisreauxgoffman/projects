@@ -1527,87 +1527,81 @@ Recognized for pioneering voice-AI integrations, most notably the development of
             <div class="news-item"><h4 class="news-title">Neighborhood Watch Meeting</h4><p class="news-desc">Meeting scheduled for next Wednesday at 7 PM.</p></div>`;
     }
 
-    // ==================== ENCRYPTED CAROUSEL ====================
-    class EncryptedImageCarousel {
-        constructor() {
-            this.images = [];
-            this.current = 0;
-            this.validPasswords = ["KillianDaisreauxGoffman", "u&)~9)B&Rrp&", "20Mix;<.PT(x"];
-            this.init();
-        }
-        init() {
-            const carousel = document.getElementById('encrypted-carousel');
-            const controls = document.getElementById('carousel-controls');
-            const urls = [
-                "https://github.com/killiandaisreauxgoffman/projects/blob/main/photo_2025-07-15_20-37-05.jpg?raw=true",
-                "https://github.com/killiandaisreauxgoffman/projects/blob/main/photo_2025-07-15_20-38-06.jpg?raw=true",
-                "https://github.com/killiandaisreauxgoffman/projects/blob/main/photo_2025-07-15_20-37-29.jpg?raw=true"
-            ];
-            
-            // Add image nodes
-            urls.forEach((url, i) => {
-                const img = document.createElement('img');
-                img.src = url;
-                img.classList.add('carousel-image', 'blurred');
-                img.style.transform = `rotateY(${i * 120}deg) translateZ(250px)`;
-                carousel.appendChild(img);
-                this.images.push(img);
-                
-                const dot = document.createElement('div');
-                dot.classList.add('carousel-dot');
-                if (i === 0) dot.classList.add('active');
-                dot.addEventListener('click', () => this.goTo(i));
-                controls.appendChild(dot);
-            });
-
-            // Embed Vimeo player as an additional carousel item (Index 3)
-            const vimeoIndex = urls.length;
-            const vimeoWrapper = document.createElement('div');
-            vimeoWrapper.classList.add('carousel-image', 'vimeo-container');
-            vimeoWrapper.style.transform = `rotateY(${vimeoIndex * 120}deg) translateZ(250px)`;
-            vimeoWrapper.style.position = 'absolute';
-            vimeoWrapper.style.width = '100%';
-            vimeoWrapper.style.height = '100%';
-            vimeoWrapper.style.background = '#000';
-            vimeoWrapper.innerHTML = `
-                <div style="padding:177.78% 0 0 0;position:relative;">
-                    <iframe src="https://player.vimeo.com/video/1232796418?badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479" frameborder="0" allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share" referrerpolicy="strict-origin-when-cross-origin" style="position:absolute;top:0;left:0;width:100%;height:100%;" title="My Global Personas"></iframe>
-                </div>
-            `;
-            carousel.appendChild(vimeoWrapper);
-
-            // Add control dot for the Vimeo slide
-            const vimeoDot = document.createElement('div');
-            vimeoDot.classList.add('carousel-dot');
-            vimeoDot.addEventListener('click', () => this.goTo(vimeoIndex));
-            controls.appendChild(vimeoDot);
-
-            document.getElementById('decryption-btn').addEventListener('click', () => this.decrypt());
-        }
-        goTo(i) {
-            this.current = i;
-            document.getElementById('encrypted-carousel').style.transform = `rotateY(${-i * 120}deg)`;
-            document.querySelectorAll('.carousel-dot').forEach((d, j) => {
-                if (j === i) d.classList.add('active');
-                else d.classList.remove('active');
-            });
-        }
-        decrypt() {
-            const key = document.getElementById('decryption-key').value;
-            // Handle decryption only if current item is an image index
-            if (this.images[this.current]) {
-                if (this.validPasswords.includes(key)) {
-                    this.images[this.current].classList.remove('blurred');
-                    showNotification('Decrypted', 'Image unlocked', 2000);
-                } else {
-                    alert('Invalid decryption key!');
-                }
-            } else {
-                alert('This slide contains embedded video content and does not require decryption.');
-            }
-            document.getElementById('decryption-key').value = '';
-        }
+   // ==================== ENCRYPTED CAROUSEL ====================
+class EncryptedImageCarousel {
+    constructor() {
+        this.cards = [];
+        this.current = 0;
+        this.validPasswords = ["KillianDaisreauxGoffman", "u&)~9)B&Rrp&", "20Mix;<.PT(x"];
+        this.init();
     }
+    init() {
+        const carousel = document.getElementById('encrypted-carousel');
+        const controls = document.getElementById('carousel-controls');
+        const urls = [
+            "https://github.com/killiandaisreauxgoffman/projects/blob/main/photo_2025-07-15_20-37-05.jpg?raw=true",
+            "https://github.com/killiandaisreauxgoffman/projects/blob/main/photo_2025-07-15_20-38-06.jpg?raw=true",
+            "https://github.com/killiandaisreauxgoffman/projects/blob/main/photo_2025-07-15_20-37-29.jpg?raw=true"
+        ];
+        
+        // Add image cards
+        urls.forEach((url, i) => {
+            const img = document.createElement('img');
+            img.src = url;
+            img.classList.add('carousel-image', 'blurred');
+            img.style.transform = `rotateY(${i * 120}deg) translateZ(250px)`;
+            carousel.appendChild(img);
+            this.cards.push(img);
+            
+            this.createDot(i, controls);
+        });
+
+        // Add Vimeo video card (Index 3) - also starts blurred & locked
+        const vimeoIndex = urls.length;
+        const vimeoWrapper = document.createElement('div');
+        vimeoWrapper.classList.add('carousel-image', 'blurred');
+        vimeoWrapper.style.transform = `rotateY(${vimeoIndex * 120}deg) translateZ(250px)`;
+        vimeoWrapper.innerHTML = `
+            <iframe src="https://player.vimeo.com/video/1232796418?badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479" frameborder="0" allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share" referrerpolicy="strict-origin-when-cross-origin" title="My Global Personas"></iframe>
+        `;
+        carousel.appendChild(vimeoWrapper);
+        this.cards.push(vimeoWrapper);
+
+        this.createDot(vimeoIndex, controls);
+
+        document.getElementById('decryption-btn').addEventListener('click', () => this.decrypt());
+    }
+    createDot(i, controls) {
+        const dot = document.createElement('div');
+        dot.classList.add('carousel-dot');
+        if (i === 0) dot.classList.add('active');
+        dot.addEventListener('click', () => this.goTo(i));
+        controls.appendChild(dot);
+    }
+    goTo(i) {
+        this.current = i;
+        document.getElementById('encrypted-carousel').style.transform = `rotateY(${-i * 120}deg)`;
+        document.querySelectorAll('.carousel-dot').forEach((d, j) => {
+            if (j === i) d.classList.add('active');
+            else d.classList.remove('active');
+        });
+    }
+    decrypt() {
+        const key = document.getElementById('decryption-key').value;
+        if (this.validPasswords.includes(key)) {
+            const currentCard = this.cards[this.current];
+            if (currentCard.classList.contains('blurred')) {
+                currentCard.classList.remove('blurred');
+                showNotification('Decrypted', 'Content unlocked successfully', 2000);
+            } else {
+                showNotification('Already Unlocked', 'This slide is already decrypted', 2000);
+            }
+        } else {
+            alert('Invalid decryption key!');
+        }
+        document.getElementById('decryption-key').value = '';
+    }
+}
 
     // ==================== TELNYX SIP WEBPHONE (UPGRADED) ====================
     class TelnyxWebPhone {
