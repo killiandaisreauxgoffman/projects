@@ -1542,8 +1542,9 @@ Recognized for pioneering voice-AI integrations, most notably the development of
                 "https://github.com/killiandaisreauxgoffman/projects/blob/main/photo_2025-07-15_20-37-05.jpg?raw=true",
                 "https://github.com/killiandaisreauxgoffman/projects/blob/main/photo_2025-07-15_20-38-06.jpg?raw=true",
                 "https://github.com/killiandaisreauxgoffman/projects/blob/main/photo_2025-07-15_20-37-29.jpg?raw=true"
-                <div style="padding:177.78% 0 0 0;position:relative;"><iframe src="https://player.vimeo.com/video/1232796418?badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479" frameborder="0" allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share" referrerpolicy="strict-origin-when-cross-origin" style="position:absolute;top:0;left:0;width:100%;height:100%;" title="My Global Personas"></iframe></div><script src="https://player.vimeo.com/api/player.js"></script>
             ];
+            
+            // Add image nodes
             urls.forEach((url, i) => {
                 const img = document.createElement('img');
                 img.src = url;
@@ -1551,12 +1552,36 @@ Recognized for pioneering voice-AI integrations, most notably the development of
                 img.style.transform = `rotateY(${i * 120}deg) translateZ(250px)`;
                 carousel.appendChild(img);
                 this.images.push(img);
+                
                 const dot = document.createElement('div');
                 dot.classList.add('carousel-dot');
                 if (i === 0) dot.classList.add('active');
                 dot.addEventListener('click', () => this.goTo(i));
                 controls.appendChild(dot);
             });
+
+            // Embed Vimeo player as an additional carousel item (Index 3)
+            const vimeoIndex = urls.length;
+            const vimeoWrapper = document.createElement('div');
+            vimeoWrapper.classList.add('carousel-image', 'vimeo-container');
+            vimeoWrapper.style.transform = `rotateY(${vimeoIndex * 120}deg) translateZ(250px)`;
+            vimeoWrapper.style.position = 'absolute';
+            vimeoWrapper.style.width = '100%';
+            vimeoWrapper.style.height = '100%';
+            vimeoWrapper.style.background = '#000';
+            vimeoWrapper.innerHTML = `
+                <div style="padding:177.78% 0 0 0;position:relative;">
+                    <iframe src="https://player.vimeo.com/video/1232796418?badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479" frameborder="0" allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share" referrerpolicy="strict-origin-when-cross-origin" style="position:absolute;top:0;left:0;width:100%;height:100%;" title="My Global Personas"></iframe>
+                </div>
+            `;
+            carousel.appendChild(vimeoWrapper);
+
+            // Add control dot for the Vimeo slide
+            const vimeoDot = document.createElement('div');
+            vimeoDot.classList.add('carousel-dot');
+            vimeoDot.addEventListener('click', () => this.goTo(vimeoIndex));
+            controls.appendChild(vimeoDot);
+
             document.getElementById('decryption-btn').addEventListener('click', () => this.decrypt());
         }
         goTo(i) {
@@ -1569,11 +1594,16 @@ Recognized for pioneering voice-AI integrations, most notably the development of
         }
         decrypt() {
             const key = document.getElementById('decryption-key').value;
-            if (this.validPasswords.includes(key)) {
-                this.images[this.current].classList.remove('blurred');
-                showNotification('Decrypted', 'Image unlocked', 2000);
+            // Handle decryption only if current item is an image index
+            if (this.images[this.current]) {
+                if (this.validPasswords.includes(key)) {
+                    this.images[this.current].classList.remove('blurred');
+                    showNotification('Decrypted', 'Image unlocked', 2000);
+                } else {
+                    alert('Invalid decryption key!');
+                }
             } else {
-                alert('Invalid decryption key!');
+                alert('This slide contains embedded video content and does not require decryption.');
             }
             document.getElementById('decryption-key').value = '';
         }
