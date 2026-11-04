@@ -1527,60 +1527,64 @@ Recognized for pioneering voice-AI integrations, most notably the development of
             <div class="news-item"><h4 class="news-title">Neighborhood Watch Meeting</h4><p class="news-desc">Meeting scheduled for next Wednesday at 7 PM.</p></div>`;
     }
 
-   // ==================== ENCRYPTED CAROUSEL ====================
+  // ==================== ENCRYPTED CAROUSEL ====================
 class EncryptedImageCarousel {
     constructor() {
         this.cards = [];
         this.current = 0;
         this.validPasswords = ["KillianDaisreauxGoffman", "u&)~9)B&Rrp&", "20Mix;<.PT(x"];
+        
+        // Define all carousel items (3 images + 1 video)
+        this.items = [
+            { type: 'image', url: "https://github.com/killiandaisreauxgoffman/projects/blob/main/photo_2025-07-15_20-37-05.jpg?raw=true" },
+            { type: 'image', url: "https://github.com/killiandaisreauxgoffman/projects/blob/main/photo_2025-07-15_20-38-06.jpg?raw=true" },
+            { type: 'image', url: "https://github.com/killiandaisreauxgoffman/projects/blob/main/photo_2025-07-15_20-37-29.jpg?raw=true" },
+            { type: 'video', html: '<div style="padding:177.78% 0 0 0;position:relative;"><iframe src="https://player.vimeo.com/video/1232796418?badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479" frameborder="0" allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share" referrerpolicy="strict-origin-when-cross-origin" style="position:absolute;top:0;left:0;width:100%;height:100%;" title="My Global Personas"></iframe></div>' }
+        ];
+
         this.init();
     }
     init() {
         const carousel = document.getElementById('encrypted-carousel');
         const controls = document.getElementById('carousel-controls');
-        const urls = [
-            "https://github.com/killiandaisreauxgoffman/projects/blob/main/photo_2025-07-15_20-37-05.jpg?raw=true",
-            "https://github.com/killiandaisreauxgoffman/projects/blob/main/photo_2025-07-15_20-38-06.jpg?raw=true",
-            "https://github.com/killiandaisreauxgoffman/projects/blob/main/photo_2025-07-15_20-37-29.jpg?raw=true"
-        ];
-        
-        // Add image cards
-        urls.forEach((url, i) => {
-            const img = document.createElement('img');
-            img.src = url;
-            img.classList.add('carousel-image', 'blurred');
-            img.style.transform = `rotateY(${i * 120}deg) translateZ(250px)`;
-            carousel.appendChild(img);
-            this.cards.push(img);
-            
-            this.createDot(i, controls);
+        const totalItems = this.items.length;
+        const angleStep = 360 / totalItems; // Dynamically calculates spacing (90deg for 4 items)
+
+        this.items.forEach((item, i) => {
+            const card = document.createElement('div');
+            card.classList.add('carousel-image', 'blurred');
+            card.style.transform = `rotateY(${i * angleStep}deg) translateZ(250px)`;
+
+            if (item.type === 'image') {
+                const img = document.createElement('img');
+                img.src = item.url;
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.objectFit = 'cover';
+                card.appendChild(img);
+            } else if (item.type === 'video') {
+                card.innerHTML = item.html;
+            }
+
+            carousel.appendChild(card);
+            this.cards.push(card);
+
+            // Create navigation dot for each item
+            const dot = document.createElement('div');
+            dot.classList.add('carousel-dot');
+            if (i === 0) dot.classList.add('active');
+            dot.addEventListener('click', () => this.goTo(i));
+            controls.appendChild(dot);
         });
-
-        // Add Vimeo video card (Index 3) - also starts blurred & locked
-        const vimeoIndex = urls.length;
-        const vimeoWrapper = document.createElement('div');
-        vimeoWrapper.classList.add('carousel-image', 'blurred');
-        vimeoWrapper.style.transform = `rotateY(${vimeoIndex * 120}deg) translateZ(250px)`;
-        vimeoWrapper.innerHTML = `
-            <iframe src="https://player.vimeo.com/video/1232796418?badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479" frameborder="0" allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share" referrerpolicy="strict-origin-when-cross-origin" title="My Global Personas"></iframe>
-        `;
-        carousel.appendChild(vimeoWrapper);
-        this.cards.push(vimeoWrapper);
-
-        this.createDot(vimeoIndex, controls);
 
         document.getElementById('decryption-btn').addEventListener('click', () => this.decrypt());
     }
-    createDot(i, controls) {
-        const dot = document.createElement('div');
-        dot.classList.add('carousel-dot');
-        if (i === 0) dot.classList.add('active');
-        dot.addEventListener('click', () => this.goTo(i));
-        controls.appendChild(dot);
-    }
     goTo(i) {
         this.current = i;
-        document.getElementById('encrypted-carousel').style.transform = `rotateY(${-i * 120}deg)`;
+        const totalItems = this.items.length;
+        const angleStep = 360 / totalItems;
+        document.getElementById('encrypted-carousel').style.transform = `rotateY(${-i * angleStep}deg)`;
+        
         document.querySelectorAll('.carousel-dot').forEach((d, j) => {
             if (j === i) d.classList.add('active');
             else d.classList.remove('active');
@@ -1602,7 +1606,6 @@ class EncryptedImageCarousel {
         document.getElementById('decryption-key').value = '';
     }
 }
-
     // ==================== TELNYX SIP WEBPHONE (UPGRADED) ====================
     class TelnyxWebPhone {
         constructor() {
